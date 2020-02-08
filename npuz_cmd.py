@@ -140,6 +140,11 @@ class Search:
                     ticks += 1
                     openList.put((child.getHvalue()+child.g, (ticks, child)))
 
+                del children
+
+            del nodeKey
+            del currNode
+
         return None
 
     def getNodeKey(self, puzzle):
@@ -166,6 +171,8 @@ class Search:
                 for j in range(i+1, len(lineList)):
                     if lineList[j] and lineList[i] and lineList[i] > lineList[j]:
                         inversions += 1
+
+            del lineList
             #print(lineList)
             print("INV:", inversions)
             if len(puzzle) % 2 == 1:
@@ -205,9 +212,15 @@ if __name__ == "__main__":
     # argv[0] represents the name of the file that is being executed
     # argv[1] represents name of input file
     # argv[2] represents name of destination output file
+
+    #PROPER USE[1]
+    if len(sys.argv) != 3:
+        raise ValueError("Wrong number of arguments!")
     
     try:
-        f = open("n_equals_4/input_2.txt", 'r')
+        #f = open("n_equals_3/input_2.txt", 'r')
+        #PROPER USE[2]
+        f = open(sys.argv[1], 'r')
     except IOError:
         raise IOError("Input file not found!")
 
@@ -255,13 +268,20 @@ if __name__ == "__main__":
     #Solve the puzzle
     search = Search(puzzle)
     result = search.aStarOne()
-    if result is None:
-        print("UNSOLVABLE")
-    else:
-        path = reconstruct(result)
-        for action in path:
-            print(action)
-    
+
+    #PROPER USE[3]
+    with open(sys.argv[2], 'w') as out:
+        if result is None:
+            print("UNSOLVABLE")
+            out.write('UNSOLVABLE')
+        else:
+            path = reconstruct(result)
+            output = ''
+            for action in path:
+                #print(action)
+                output = output + str(action) + '\n'
+            print(output)
+            out.write(output)
     
 
 
