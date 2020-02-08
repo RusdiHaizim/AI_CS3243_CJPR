@@ -3,17 +3,20 @@ import sys
 import copy
 from queue import PriorityQueue, Queue
 
+moveList = ["UP", "DOWN", "LEFT", "RIGHT"]
+
 class Node:
     def __init__(self, puzzle, parent=None, action=""):
         self.state = puzzle
         self.parent = parent
         self.g = 0
+        #if parent exists, increment distance/step from parent's
         if parent is not None:
             self.g = parent.g + 1
-            self.moves = action
         else:
             self.g = 0
-            self.moves = action
+        self.moves = action
+        self.key = self.getNodeKey(self.state.puzzle)
             
     #Returns heuristic 1, no. of misplaced tiles
     def getHvalue(self):
@@ -29,12 +32,74 @@ class Node:
     def isGoalState(self):
         return self.state.checkPuzzle()
 
+    def swap(self, puzzle, p1, p2):
+        (y1, x1) = p1
+        (y2, x2) = p2
+        temp = puzzle[y1][x1]
+        puzzle[y1][x1] = puzzle[y2][x2]
+        puzzle[y2][x2] = temp
+
+    def getNodeKey(self, puzzle):
+        output = ''
+        for i in puzzle:
+            for j in i:
+                output += str(j)
+        return output
+
+    def copy(self, puzzle):
+        copy = []
+        for i in range(0, len(puzzle)):
+            temp = []
+            for j in range(0, len(puzzle)):
+                temp.append(puzzle[i][j])
+            copy.append(temp)
+        return copy
+
+    def findZero(self, puzzle):
+        (y, x) = (0, 0)
+        for i in range(0, len(puzzle)):
+            for j in range(0, len(puzzle)):
+                if puzzle[i][j] == 0:
+                    (y, x) = (i, j)
+        return (y, x)
+
     def getChildren(self):
-        children = Queue()
-        for action in self.state.moveList:
-            tempNode = copy.deepcopy(self.state)
-            tempNode.move(action)
-            children.put(Node(tempNode, self, action))
+        #children contains a child(of 3 elements)
+        #child contains: puzzle, action(str), nodekey
+        children = []
+        (y, x) = self.findZero(self.state.puzzle)
+        #print("Original", "(y, x)", y, x)
+        moves = [(y-1, x), (y+1, x), (y, x-1), (y, x+1)]
+        iniPuzzle = self.state.puzzle
+        for action in range(0, len(moves)):
+            (y1, x1) = moves[action]
+            flag = False
+            if action == 0 and y > 0:
+                #move up
+                flag = True
+            elif action == 1 and y < (self.state.size - 1):
+                #move down
+                flag = True
+            elif action == 2 and x > 0:
+                #move left
+                flag = True
+            elif action == 3 and x < (self.state.size - 1):
+                #move right
+                flag = True
+            if flag == True:
+                tempPuzzle = self.copy(iniPuzzle)
+                self.swap(tempPuzzle, (y1, x1), (y, x))
+                #print("New", "(y, x)", y1, x1)
+                children.append( (tempPuzzle,\
+                                moveList[action], \
+                                self.getNodeKey(tempPuzzle)) )
+                                
+##        for action in self.state.moveList:
+##            tempNode = copy.deepcopy(self.state)
+##            tempNode.move(action)
+##            children.put(Node(tempNode, self, action))
+##            tempPuzzle = self.state.puzzle
+            
         return children
         
 
@@ -44,12 +109,14 @@ class Puzzle:
         self.size = len(initState)
         self.puzzle = initState
         self.end = goalState
-        self.zero = (0, 0)
-        self.moveList = ["UP", "DOWN", "LEFT", "RIGHT"]
-        for i in range(0, self.size):
-            for j in range(0, self.size):
-                if int(self.puzzle[i][j]) == 0:
-                    self.zero = (i, j)
+##        self.zero = (0, 0)
+##        self.moveList = ["UP", "DOWN", "LEFT", "RIGHT"]
+
+        #Set the blank tile position
+##        for i in range(0, self.size):
+##            for j in range(0, self.size):
+##                if int(self.puzzle[i][j]) == 0:
+##                    self.zero = (i, j)
                     
     #prints out puzzle for debugging
     def printP(self):
@@ -63,32 +130,32 @@ class Puzzle:
         if self.puzzle == self.end:
             return True
 
-    #do bubble swap
-    def swap(self, a1, a2):
-        y1, x1 = a1
-        y2, x2 = a2
-        temp = self.puzzle[y1][x1]
-        self.puzzle[y1][x1] = self.puzzle[y2][x2]
-        self.puzzle[y2][x2] = temp
-
-    #Iterate through moves
-    def move(self, action):
-        if action == "UP":
-            if (self.zero[0] != 0):
-                self.swap((self.zero[0] - 1, self.zero[1]), self.zero)
-                self.zero = (self.zero[0] - 1, self.zero[1])
-        if action == "DOWN":
-            if (self.zero[0] != self.size - 1):
-                self.swap((self.zero[0] + 1, self.zero[1]), self.zero)
-                self.zero = (self.zero[0] + 1, self.zero[1])
-        if action == "LEFT":
-            if (self.zero[1] != 0):
-                self.swap((self.zero[0], self.zero[1] - 1), self.zero)
-                self.zero = (self.zero[0], self.zero[1] - 1)
-        if action == "RIGHT":
-            if (self.zero[1] != self.size - 1):
-                self.swap((self.zero[0], self.zero[1] + 1), self.zero)
-                self.zero = (self.zero[0], self.zero[1] + 1)
+##    #do bubble swap
+##    def swap(self, a1, a2):
+##        y1, x1 = a1
+##        y2, x2 = a2
+##        temp = self.puzzle[y1][x1]
+##        self.puzzle[y1][x1] = self.puzzle[y2][x2]
+##        self.puzzle[y2][x2] = temp
+##
+##    #Iterate through moves
+##    def move(self, action):
+##        if action == "UP":
+##            if (self.zero[0] != 0):
+##                self.swap((self.zero[0] - 1, self.zero[1]), self.zero)
+##                self.zero = (self.zero[0] - 1, self.zero[1])
+##        if action == "DOWN":
+##            if (self.zero[0] != self.size - 1):
+##                self.swap((self.zero[0] + 1, self.zero[1]), self.zero)
+##                self.zero = (self.zero[0] + 1, self.zero[1])
+##        if action == "LEFT":
+##            if (self.zero[1] != 0):
+##                self.swap((self.zero[0], self.zero[1] - 1), self.zero)
+##                self.zero = (self.zero[0], self.zero[1] - 1)
+##        if action == "RIGHT":
+##            if (self.zero[1] != self.size - 1):
+##                self.swap((self.zero[0], self.zero[1] + 1), self.zero)
+##                self.zero = (self.zero[0], self.zero[1] + 1)
 
 
 
@@ -113,10 +180,11 @@ class Search:
             if stepCount % 10000 == 0:
                 print("step:", stepCount)
             #Check frontier
-##            if openList.empty():
-##                print("Unsolvable")
+            if openList.empty():
+                print("Unsolvable")
+                return None
 ##            else:
-##                print("~"*8)
+##                print("~"*4)
 ##                for i in openList.queue:
 ##                    print(" - "*2)
 ##                    print("F:", i[0])
@@ -125,34 +193,46 @@ class Search:
 ##                print("~"*8)
             currNode = openList.get()[1][1]
             #Check if goal
-            nodeKey = self.getNodeKey(currNode.state.puzzle)
+            nodeKey = currNode.key
             #print(nodeKey)
-            
+
+            #Won't visit same state
+            closedList[nodeKey] = 1
             if currNode.isGoalState():
                 print(stepCount)
                 return currNode
-            elif nodeKey not in closedList:
-                #check if previously visited state
-                closedList[nodeKey] = 1
-                children = currNode.getChildren()
-                while not children.empty():
-                    child = children.get()
-                    ticks += 1
-                    openList.put((child.getHvalue()+child.g, (ticks, child)))
-
-                del children
-
-            del nodeKey
-            del currNode
+            
+            children = currNode.getChildren()
+            #child contains: puzzle, action(str), nodekey
+            #child IS NOT A NODE
+            for child in children:
+                #check if previously visited child, using nodekey
+                if child[2] in closedList:
+                    continue
+                ticks += 1
+                newPuz = copy.deepcopy(currNode.state)
+                #change initial state of puzzle only
+                newPuz.puzzle = child[0]
+                newNode = Node(newPuz, currNode, child[1])
+                openList.put( (newNode.getHvalue() + newNode.g,\
+                               (ticks, newNode)) )
+            
+##            while not children.empty():
+##                child = children.get()
+##                childKey = self.getNodeKey(child.state.puzzle)
+##                if childKey in closedList:
+##                    continue
+##                ticks += 1
+##                openList.put((child.getHvalue()+child.g, (ticks, child)))
 
         return None
 
-    def getNodeKey(self, puzzle):
-        output = ''
-        for i in puzzle:
-            for j in i:
-                output += str(j)
-        return output
+##    def getNodeKey(self, puzzle):
+##        output = ''
+##        for i in puzzle:
+##            for j in i:
+##                output += str(j)
+##        return output
                     
 
     #Function to check for solvable state

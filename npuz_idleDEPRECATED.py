@@ -3,7 +3,7 @@ import sys
 import copy
 from queue import PriorityQueue, Queue
 
-fileInput = 'n_equals_4/input_1.txt'
+fileInput = 'n_equals_3/input_3.txt'
 fileOutput = 'out_idle.txt'
 
 class Node:
@@ -134,19 +134,35 @@ class Search:
             if currNode.isGoalState():
                 print(stepCount)
                 return currNode
-            elif nodeKey not in closedList:
-                #check if previously visited state
-                closedList[nodeKey] = 1
-                children = currNode.getChildren()
-                while not children.empty():
-                    child = children.get()
-                    ticks += 1
-                    openList.put((child.getHvalue()+child.g, (ticks, child)))
-
-                del children
-
-            del nodeKey
-            del currNode
+            #Won't visit same state
+            closedList[nodeKey] = 1
+            if currNode.isGoalState():
+                print(stepCount)
+                return currNode
+            
+            children = currNode.getChildren()
+            while not children.empty():
+                child = children.get()
+                childKey = self.getNodeKey(child.state.puzzle)
+                if childKey in closedList:
+                    continue
+                ticks += 1
+                openList.put((child.getHvalue()+child.g, (ticks, child)))
+            
+##            elif nodeKey not in closedList or \
+##                 (nodeKey in closedList and closedList[nodeKey] != 1):
+##                #check if previously visited state
+##                closedList[nodeKey] = 1
+##                children = currNode.getChildren()
+##                while not children.empty():
+##                    child = children.get()
+##                    ticks += 1
+##                    openList.put((child.getHvalue()+child.g, (ticks, child)))
+##
+##                del children
+##
+##            del nodeKey
+##            del currNode
 
         return None
 
