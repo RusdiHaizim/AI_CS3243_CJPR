@@ -2,11 +2,14 @@ import os
 import sys
 import copy
 from queue import PriorityQueue, Queue
+from math import sqrt
 
 moveList = ["UP", "DOWN", "LEFT", "RIGHT"]
+mMap = [1, 0, 3, 2]
+finalGoal = []
 
 class Node:
-    def __init__(self, puzzle, parent=None, action=""):
+    def __init__(self, puzzle, parent=None, action=-1):
         self.state = puzzle
         self.parent = parent
         self.g = 0
@@ -16,17 +19,67 @@ class Node:
         else:
             self.g = 0
         self.moves = action
-        self.key = self.getNodeKey(self.state.puzzle)
+        #self.key = self.getNodeKey(self.state.puzzle)
+        self.key = int(self.getNodeKey(self.state.puzzle)) + self.g
+        #print(self.key)
             
     #Returns heuristic 1, no. of misplaced tiles
     def getHvalue(self):
+        #Scrub heuristic
+        #return self.getMisplacedValue()
+        
+        #Slightly less scrub heuristic
+        #return self.getManhattanValue()
+
+        #Testing Euclid heuristic
+        #return self.getEuclideanValue()
+        
+        #Legit Combined
+        #return self.getMisplacedValue() + self.getManhattanValue()
+
+        #Illegitimate Combined
+        #return self.getMisplacedValue()*1.001 + self.getManhattanValue()*1.0001
+
+        #Tes
+        return self.getMisplacedValue() + \
+               self.getManhattanValue() + \
+               self.getEuclideanValue()
+
+    def getMisplacedValue(self):
         h = 0
-        for i in range(0, self.state.size):
-            for j in range(0, self.state.size):
-                if self.state.puzzle[i][j] != self.state.end[i][j] \
+        size = len(self.state.puzzle)
+        for i in range(0, size):
+            for j in range(0, size):
+                if self.state.puzzle[i][j] != finalGoal[i][j] \
                    and int(self.state.puzzle[i][j]) != 0:
                     h += 1
         #print("H", h)
+        return h
+        
+    def getManhattanValue(self):
+        h = 0
+        size = len(self.state.puzzle)
+        for i in range(0, size):
+            for j in range(0, size):
+                num = self.state.puzzle[i][j]
+                if num != 0:
+                    rowGoal = (num - 1) / size
+                    colGoal = (num - 1) % size
+                    diffRow = abs(rowGoal - i)
+                    diffCol = abs(colGoal - j)
+                    h += diffRow + diffCol
+        return h
+
+    def getEuclideanValue(self):
+        h = 0
+        size = len(self.state.puzzle)
+        for i in range(0, size):
+            for j in range(0, size):
+                num = self.state.puzzle[i][j]
+                if num != 0:
+                    rowGoal = (num - 1) / size
+                    colGoal = (num - 1) % size
+                    h += sqrt( (rowGoal - i)**2 + (colGoal - j)**2 )
         return h
 
     def isGoalState(self):
@@ -86,37 +139,24 @@ class Node:
             elif action == 3 and x < (self.state.size - 1):
                 #move right
                 flag = True
+
             if flag == True:
                 tempPuzzle = self.copy(iniPuzzle)
                 self.swap(tempPuzzle, (y1, x1), (y, x))
                 #print("New", "(y, x)", y1, x1)
                 children.append( (tempPuzzle,\
-                                moveList[action], \
-                                self.getNodeKey(tempPuzzle)) )
-                                
-##        for action in self.state.moveList:
-##            tempNode = copy.deepcopy(self.state)
-##            tempNode.move(action)
-##            children.put(Node(tempNode, self, action))
-##            tempPuzzle = self.state.puzzle
+                                action, \
+                                str(tempPuzzle)) )
             
         return children
         
 
 class Puzzle:
-    def __init__(self, initState, goalState):
+    def __init__(self, initState):
         #todo
         self.size = len(initState)
         self.puzzle = initState
-        self.end = goalState
-##        self.zero = (0, 0)
-##        self.moveList = ["UP", "DOWN", "LEFT", "RIGHT"]
-
-        #Set the blank tile position
-##        for i in range(0, self.size):
-##            for j in range(0, self.size):
-##                if int(self.puzzle[i][j]) == 0:
-##                    self.zero = (i, j)
+        #self.end = goalState
                     
     #prints out puzzle for debugging
     def printP(self):
@@ -127,52 +167,25 @@ class Puzzle:
             
     #check if Goal is reached
     def checkPuzzle(self):
-        if self.puzzle == self.end:
+        if self.puzzle == finalGoal:
             return True
-
-##    #do bubble swap
-##    def swap(self, a1, a2):
-##        y1, x1 = a1
-##        y2, x2 = a2
-##        temp = self.puzzle[y1][x1]
-##        self.puzzle[y1][x1] = self.puzzle[y2][x2]
-##        self.puzzle[y2][x2] = temp
-##
-##    #Iterate through moves
-##    def move(self, action):
-##        if action == "UP":
-##            if (self.zero[0] != 0):
-##                self.swap((self.zero[0] - 1, self.zero[1]), self.zero)
-##                self.zero = (self.zero[0] - 1, self.zero[1])
-##        if action == "DOWN":
-##            if (self.zero[0] != self.size - 1):
-##                self.swap((self.zero[0] + 1, self.zero[1]), self.zero)
-##                self.zero = (self.zero[0] + 1, self.zero[1])
-##        if action == "LEFT":
-##            if (self.zero[1] != 0):
-##                self.swap((self.zero[0], self.zero[1] - 1), self.zero)
-##                self.zero = (self.zero[0], self.zero[1] - 1)
-##        if action == "RIGHT":
-##            if (self.zero[1] != self.size - 1):
-##                self.swap((self.zero[0], self.zero[1] + 1), self.zero)
-##                self.zero = (self.zero[0], self.zero[1] + 1)
-
-
 
 class Search:
     def __init__(self, puzzle):
         self.startNode = Node(puzzle)
     
     def aStarOne(self):
-        ticks = 0
+        #ticks = 0
         currNode = self.startNode
         
         if self.checkSolvable(currNode.state.puzzle) == False:
             return None
         
         openList = PriorityQueue()
-        openList.put((currNode.getHvalue(), (ticks, currNode)))
+        openList.put((currNode.getHvalue(), (currNode.key, currNode)))
         closedList = {}
+        openMap = {}
+        openMap[currNode.key] = currNode
 
         stepCount = 0
         while True:
@@ -191,6 +204,7 @@ class Search:
 ##                    print(i[1][1].state.printP())
 ##                    print(" - "*2)
 ##                print("~"*8)
+            
             currNode = openList.get()[1][1]
             #Check if goal
             nodeKey = currNode.key
@@ -203,38 +217,28 @@ class Search:
                 return currNode
             
             children = currNode.getChildren()
-            #child contains: puzzle, action(str), nodekey
+            #child contains: puzzle, action(int), nodekey
             #child IS NOT A NODE
             for child in children:
                 #check if previously visited child, using nodekey
                 if child[2] in closedList:
                     continue
-                ticks += 1
+                #ticks += 1
+                if child[1] == mMap[currNode.moves]:
+                    continue
                 newPuz = copy.deepcopy(currNode.state)
                 #change initial state of puzzle only
                 newPuz.puzzle = child[0]
+                
                 newNode = Node(newPuz, currNode, child[1])
+                if newNode.key in openMap:
+                    continue
                 openList.put( (newNode.getHvalue() + newNode.g,\
-                               (ticks, newNode)) )
+                               (newNode.key, newNode)) )
+                openMap[newNode.key] = newNode
             
-##            while not children.empty():
-##                child = children.get()
-##                childKey = self.getNodeKey(child.state.puzzle)
-##                if childKey in closedList:
-##                    continue
-##                ticks += 1
-##                openList.put((child.getHvalue()+child.g, (ticks, child)))
-
         return None
-
-##    def getNodeKey(self, puzzle):
-##        output = ''
-##        for i in puzzle:
-##            for j in i:
-##                output += str(j)
-##        return output
-                    
-
+    
     #Function to check for solvable state
     def checkSolvable(self, puzzle):
             inversions = 0
@@ -282,7 +286,9 @@ def reconstruct(currentNode):
     path = []
     current = currentNode    
     while current is not None:
-        path.append(current.moves)
+        if current.moves == -1:
+            break
+        path.append(moveList[current.moves])
         current = current.parent
     return path[::-1]
 
@@ -339,9 +345,11 @@ if __name__ == "__main__":
     for i in range(1, max_num + 1):
         goal_state[(i-1)//n][(i-1)%n] = i
     goal_state[n - 1][n - 1] = 0
+    finalGoal = goal_state
 
     #Initialise the puzzle
-    puzzle = Puzzle(init_state, goal_state)
+    #puzzle = Puzzle(init_state, goal_state)
+    puzzle = Puzzle(init_state)
     #prints out initial state
     puzzle.printP()
 
@@ -362,6 +370,7 @@ if __name__ == "__main__":
                 output = output + str(action) + '\n'
             print(output)
             out.write(output)
+            print("TOTAL:", len(path))
     
 
 
