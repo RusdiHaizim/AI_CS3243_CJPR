@@ -1,13 +1,14 @@
 import os
 import sys
 import copy
-from queue import PriorityQueue, Queue
+from Queue import PriorityQueue, Queue
 from math import sqrt
 
 moveList = ["UP", "DOWN", "LEFT", "RIGHT"]
 mMap = [1, 0, 3, 2]
 finalGoal = []
 
+###
 class Node:
     def __init__(self, puzzle, parent=None, action=-1):
         self.state = puzzle
@@ -199,7 +200,7 @@ class Node:
             
         return children
         
-
+###
 class Puzzle:
     def __init__(self, initState):
         #todo
@@ -211,14 +212,17 @@ class Puzzle:
     def printP(self):
         for i in range(0, self.size):
             for j in range(0, self.size):
-                print(self.puzzle[i][j], " ",end="")
-            print("")
+                #print(self.puzzle[i][j], " ",end="")
+                print self.puzzle[i][j], " "
+            #print("")
+            print ""
             
     #check if Goal is reached
     def checkPuzzle(self):
         if self.puzzle == finalGoal:
             return True
 
+###
 class Search:
     def __init__(self, puzzle):
         self.startNode = Node(puzzle)
@@ -240,10 +244,12 @@ class Search:
         while True:
             stepCount += 1
             if stepCount % 10000 == 0:
-                print("step:", stepCount)
+                #print("step:", stepCount)
+                print "step:", stepCount
             #Check frontier
             if openList.empty():
-                print("Unsolvable")
+                #print("Unsolvable")
+                print "Unsolvable"
                 return None
 ##            else:
 ##                print("~"*4)
@@ -262,7 +268,7 @@ class Search:
             #Won't visit same state
             closedList[nodeKey] = 1
             if currNode.isGoalState():
-                print(stepCount)
+                #print(stepCount)
                 return currNode
             
             children = currNode.getChildren()
@@ -298,7 +304,7 @@ class Search:
                     lineList.append(puzzle[i][j])
                     if puzzle[i][j] == 0:
                         (y, x) = (i, j)
-                        print("Y, X", i, j)
+                        #print("Y, X", i, j)
 
             for i in range(0, len(lineList)-1):
                 for j in range(i+1, len(lineList)):
@@ -307,14 +313,14 @@ class Search:
 
             del lineList
             #print(lineList)
-            print("INV:", inversions)
+            #print("INV:", inversions)
             if len(puzzle) % 2 == 1:
                 #ODD, must have even inversions
                 if (inversions % 2) == 0:
-                    print("ODD N, S")
+                    #print("ODD N, S")
                     return True
                 else:
-                    print("ODD N, US")
+                    #print("ODD N, US")
                     return False
             else:
                 #EVEN, must have:
@@ -322,10 +328,10 @@ class Search:
                 #2) blank on ODD row & EVEN inversions
                 if (y % 2 == 0 and inversions % 2 == 1) or \
                    (y % 2 == 1 and inversions % 2 == 0):
-                    print("EVEN N, S")
+                    #print("EVEN N, S")
                     return True
                 else:
-                    print("EVEN N, US")
+                    #print("EVEN N, US")
                     return False
                     
             
@@ -397,7 +403,8 @@ if __name__ == "__main__":
     finalGoal = goal_state
 
     #Initialise the puzzle
-    #puzzle = Puzzle(init_state, goal_state)
+    
+    #Takes in 2d array input state
     puzzle = Puzzle(init_state)
     #prints out initial state
     puzzle.printP()
@@ -409,7 +416,8 @@ if __name__ == "__main__":
     #PROPER USE[3]
     with open(sys.argv[2], 'w') as out:
         if result is None:
-            print("UNSOLVABLE")
+            #print("UNSOLVABLE")
+            print "UNSOLVABLE"
             out.write('UNSOLVABLE')
         else:
             path = reconstruct(result)
@@ -417,9 +425,10 @@ if __name__ == "__main__":
             for action in path:
                 #print(action)
                 output = output + str(action) + '\n'
-            print(output)
+            print output
             out.write(output)
-            print("TOTAL:", len(path))
+            #print("TOTAL:", len(path))
+            print "TOTAL", len(path)
     
 
 
