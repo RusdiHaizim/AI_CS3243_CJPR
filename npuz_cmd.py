@@ -29,21 +29,20 @@ class Node:
         #return self.getMisplacedValue()
         
         #Slightly less scrub heuristic
-        #return self.getManhattanValue()
+        return self.getManhattanValue()
 
         #Testing Euclid heuristic
-        #return self.getEuclideanValue()
+        #return self.getEuclideanValue()*1.01
         
         #Legit Combined
-        #return self.getMisplacedValue() + self.getManhattanValue()
-
-        #Illegitimate Combined
-        #return self.getMisplacedValue()*1.001 + self.getManhattanValue()*1.0001
+        #h3 = self.getEuclideanValue() + self.getManhattanValue()
+        #h3 /= 2
+        #return h3
 
         #Tes
-        return self.getMisplacedValue() + \
-               self.getManhattanValue() + \
-               self.getEuclideanValue()
+        #h5 = self.getMisplacedValue() + self.getManhattanValue() + self.getEuclideanValue()
+        #h5 /= 3
+        #return h5
 
     def getMisplacedValue(self):
         h = 0
@@ -62,13 +61,61 @@ class Node:
         for i in range(0, size):
             for j in range(0, size):
                 num = self.state.puzzle[i][j]
+                #print("num:", num, " ", end='')
                 if num != 0:
-                    rowGoal = (num - 1) / size
+                    rowGoal = (num - 1) // size
                     colGoal = (num - 1) % size
                     diffRow = abs(rowGoal - i)
                     diffCol = abs(colGoal - j)
-                    h += diffRow + diffCol
-        return h
+                    dist = diffRow + diffCol
+                    h += dist
+                    #print("man", dist)
+        #print("manTotal", h)
+        linearCon = 0
+        linearCon = self.getLinearConflict()
+        return h + linearCon
+
+    def getLinearConflict(self):
+        size = len(self.state.puzzle)
+        inCol = [0]*(size**2)
+        inRow = [0]*(size**2)
+        conflicts = 0
+        #Precompute bools for numbers in right row and col
+        for y in range(size):
+            for x in range(size):
+                num = self.state.puzzle[y][x]
+                rowGoal = (num - 1) // size
+                colGoal = (num - 1) % size
+                inRow[num] = (rowGoal == y)
+                inCol[num] = (colGoal == x)
+        #Traverse board to check if linear conflict exists
+        for y in range(size):
+            for x in range(size):
+                num = self.state.puzzle[y][x]
+                if self.state.puzzle[y][x] == 0:
+                    continue
+                #check if num is inside column
+                if inCol[num]:
+                    #check downwards for conflict(AVOID DOUBLE COUNT)
+                    for r in range(y, size):
+                        numCol = self.state.puzzle[r][x]
+                        if self.state.puzzle[r][x] == 0:
+                            continue
+                        if inCol[numCol] and \
+                           self.state.puzzle[r][x] < self.state.puzzle[y][x]:
+                            conflicts += 1
+                #check if num is inside row
+                if inRow[num]:
+                    #check rightwards for conflict(SAME AVOID)
+                    for c in range(x, size):
+                        numRow = self.state.puzzle[y][c]
+                        if self.state.puzzle[y][c] == 0:
+                            continue
+                        if inRow[numRow] and \
+                           self.state.puzzle[y][c] < self.state.puzzle[y][x]:
+                            conflicts += 1                
+        #print("conflicts:", conflicts)
+        return 2 * conflicts
 
     def getEuclideanValue(self):
         h = 0
@@ -77,9 +124,11 @@ class Node:
             for j in range(0, size):
                 num = self.state.puzzle[i][j]
                 if num != 0:
-                    rowGoal = (num - 1) / size
+                    rowGoal = (num - 1) // size
                     colGoal = (num - 1) % size
-                    h += sqrt( (rowGoal - i)**2 + (colGoal - j)**2 )
+                    dist = sqrt( (rowGoal - i)**2 + (colGoal - j)**2 )
+                    h += dist
+        #print("euclid", h)
         return h
 
     def isGoalState(self):
