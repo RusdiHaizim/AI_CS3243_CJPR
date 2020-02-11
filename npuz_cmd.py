@@ -10,7 +10,7 @@ finalGoal = []
 
 ###
 class Node:
-    def __init__(self, puzzle, parent=None, action=-1):
+    def __init__(self, puzzle, parent=None, action=None):
         self.state = puzzle
         self.parent = parent
         self.g = 0
@@ -74,7 +74,11 @@ class Node:
         #print("manTotal", h)
         linearCon = 0
         linearCon = self.getLinearConflict()
-        return h + linearCon*2
+        manTotal = h + linearCon*2
+        #self.state.printP()
+        #print 'MAN:', manTotal
+        #print '*'*10
+        return manTotal
 
     def getLinearConflict(self):
         size = len(self.state.puzzle)
@@ -222,6 +226,7 @@ class Node:
                 tempPuzzle = self.copy(iniPuzzle)
                 self.swap(tempPuzzle, (y1, x1), (y, x))
                 #print("New", "(y, x)", y1, x1)
+                #print 'New', '(',y,x,')', y1, x1
                 children.append( (tempPuzzle,\
                                 action, \
                                 str(tempPuzzle)) )
@@ -297,18 +302,22 @@ class Search:
             closedList[nodeKey] = 1
             if currNode.isGoalState():
                 #print(stepCount)
-                print 'steps:', stepCount
+                print 'Total steps:', stepCount
                 return currNode
             
             children = currNode.getChildren()
             #child contains: puzzle, action(int), nodekey
             #child IS NOT A NODE
             for child in children:
+                #print 'MOVE',moveList[child[1]]
                 #check if previously visited child, using nodekey
                 if child[2] in closedList:
                     continue
                 #ticks += 1
-                if child[1] == mMap[currNode.moves]:
+                #print child[2]
+                if currNode.moves is not None and child[1] == mMap[currNode.moves]:
+                    #print 'currNode move:',currNode.moves
+                    #print 'child mode:',child[1]
                     continue
                 newPuz = copy.deepcopy(currNode.state)
                 #change initial state of puzzle only
@@ -317,6 +326,7 @@ class Search:
                 newNode = Node(newPuz, currNode, child[1])
                 if newNode.key in openMap:
                     continue
+                #newNode.state.printP()
                 openList.put( (newNode.getHvalue() + newNode.g,\
                                (newNode.key, newNode)) )
                 openMap[newNode.key] = newNode
@@ -374,7 +384,7 @@ def reconstruct(currentNode):
     path = []
     current = currentNode    
     while current is not None:
-        if current.moves == -1:
+        if current.moves is None:
             break
         path.append(moveList[current.moves])
         current = current.parent
