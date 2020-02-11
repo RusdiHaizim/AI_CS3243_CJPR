@@ -74,7 +74,7 @@ class Node:
         #print("manTotal", h)
         linearCon = 0
         linearCon = self.getLinearConflict()
-        return h + linearCon
+        return h + linearCon*2
 
     def getLinearConflict(self):
         size = len(self.state.puzzle)
@@ -87,36 +87,64 @@ class Node:
                 num = self.state.puzzle[y][x]
                 rowGoal = (num - 1) // size
                 colGoal = (num - 1) % size
-                inRow[num] = (rowGoal == y)
-                inCol[num] = (colGoal == x)
-        #Traverse board to check if linear conflict exists
-        for y in range(size):
-            for x in range(size):
-                num = self.state.puzzle[y][x]
-                if self.state.puzzle[y][x] == 0:
-                    continue
-                #check if num is inside column
-                if inCol[num]:
-                    #check downwards for conflict(AVOID DOUBLE COUNT)
-                    for r in range(y, size):
-                        numCol = self.state.puzzle[r][x]
-                        if self.state.puzzle[r][x] == 0:
-                            continue
-                        if inCol[numCol] and \
-                           self.state.puzzle[r][x] < self.state.puzzle[y][x]:
-                            conflicts += 1
-                #check if num is inside row
-                if inRow[num]:
-                    #check rightwards for conflict(SAME AVOID)
-                    for c in range(x, size):
-                        numRow = self.state.puzzle[y][c]
-                        if self.state.puzzle[y][c] == 0:
-                            continue
-                        if inRow[numRow] and \
-                           self.state.puzzle[y][c] < self.state.puzzle[y][x]:
-                            conflicts += 1                
+                inRow[num] = rowGoal
+                inCol[num] = colGoal
+##                print 'num:', num, 'from:',y,x,\
+##                      'in:',rowGoal,colGoal
+        #print inCol
+        #print inRow
+        #Check row conflicts
+        for r in range(size):
+            for cI in range(size):
+                for cN in range(cI+1, size):
+                    if self.state.puzzle[r][cI] and self.state.puzzle[r][cN] and\
+                       r == inRow[self.state.puzzle[r][cI]] and\
+                       inRow[self.state.puzzle[r][cI]] == inRow[self.state.puzzle[r][cN]] and\
+                       inCol[self.state.puzzle[r][cI]] > inCol[self.state.puzzle[r][cN]]:
+                        #Conflict exists!
+                        conflicts += 1
+                        #print 'CONFLICT ROW @(r,cI,cN)',r,cI,cN
+                        #print
+        #Check col conflicts
+        for c in range(size):
+            for rI in range(size):
+                for rN in range(rI+1, size):
+                    if self.state.puzzle[rI][c] and self.state.puzzle[rN][c] and\
+                       c == inCol[self.state.puzzle[rI][c]] and\
+                       inCol[self.state.puzzle[rI][c]] == inCol[self.state.puzzle[rN][c]] and\
+                       inRow[self.state.puzzle[rI][c]] > inRow[self.state.puzzle[rN][c]]:
+                        #Conflict exists!
+                        conflicts += 1
+                        #print 'CONFLICT COL @(c,rI,rN)',c,rI,rN
+                        #print
+##        for y in range(size):
+##            for x in range(size):
+##                num = self.state.puzzle[y][x]
+##                if self.state.puzzle[y][x] == 0:
+##                    continue
+##                #check if num is inside column
+##                if inCol[num]:
+##                    #check downwards for conflict(AVOID DOUBLE COUNT)
+##                    for r in range(y, size):
+##                        numCol = self.state.puzzle[r][x]
+##                        if self.state.puzzle[r][x] == 0:
+##                            continue
+##                        if inCol[numCol] and \
+##                           self.state.puzzle[r][x] < self.state.puzzle[y][x]:
+##                            conflicts += 1
+##                #check if num is inside row
+##                if inRow[num]:
+##                    #check rightwards for conflict(SAME AVOID)
+##                    for c in range(x, size):
+##                        numRow = self.state.puzzle[y][c]
+##                        if self.state.puzzle[y][c] == 0:
+##                            continue
+##                        if inRow[numRow] and \
+##                           self.state.puzzle[y][c] < self.state.puzzle[y][x]:
+##                            conflicts += 1                
         #print("conflicts:", conflicts)
-        return 2 * conflicts
+        #print "conflicts:", conflicts
+        return conflicts
 
     def getEuclideanValue(self):
         h = 0
@@ -213,7 +241,7 @@ class Puzzle:
         for i in range(0, self.size):
             for j in range(0, self.size):
                 #print(self.puzzle[i][j], " ",end="")
-                print self.puzzle[i][j], " "
+                print self.puzzle[i][j],
             #print("")
             print ""
             
@@ -269,6 +297,7 @@ class Search:
             closedList[nodeKey] = 1
             if currNode.isGoalState():
                 #print(stepCount)
+                print 'steps:', stepCount
                 return currNode
             
             children = currNode.getChildren()
@@ -296,47 +325,51 @@ class Search:
     
     #Function to check for solvable state
     def checkSolvable(self, puzzle):
-            inversions = 0
-            lineList = []
-            (y, x) = (0, 0)
-            for i in range(0, len(puzzle)):
-                for j in range(0, len(puzzle)):
-                    lineList.append(puzzle[i][j])
-                    if puzzle[i][j] == 0:
-                        (y, x) = (i, j)
-                        #print("Y, X", i, j)
+        inversions = 0
+        lineList = []
+        (y, x) = (0, 0)
+        for i in range(0, len(puzzle)):
+            for j in range(0, len(puzzle)):
+                lineList.append(puzzle[i][j])
+                if puzzle[i][j] == 0:
+                    (y, x) = (i, j)
+                    #print("Y, X", i, j)
+                    print 'Y', 'X', i, j
 
-            for i in range(0, len(lineList)-1):
-                for j in range(i+1, len(lineList)):
-                    if lineList[j] and lineList[i] and lineList[i] > lineList[j]:
-                        inversions += 1
+        for i in range(0, len(lineList)-1):
+            for j in range(i+1, len(lineList)):
+                if lineList[j] and lineList[i] and lineList[i] > lineList[j]:
+                    inversions += 1
 
-            del lineList
-            #print(lineList)
-            #print("INV:", inversions)
-            if len(puzzle) % 2 == 1:
-                #ODD, must have even inversions
-                if (inversions % 2) == 0:
-                    #print("ODD N, S")
-                    return True
-                else:
-                    #print("ODD N, US")
-                    return False
+        del lineList
+        #print(lineList)
+        #print("INV:", inversions)
+        print 'INV:', inversions
+        if len(puzzle) % 2 == 1:
+            #ODD, must have even inversions
+            if (inversions % 2) == 0:
+                #print("ODD N, S")
+                print 'ODD length Solvable'
+                return True
             else:
-                #EVEN, must have:
-                #1) blank on EVEN row & ODD inversions
-                #2) blank on ODD row & EVEN inversions
-                if (y % 2 == 0 and inversions % 2 == 1) or \
-                   (y % 2 == 1 and inversions % 2 == 0):
-                    #print("EVEN N, S")
-                    return True
-                else:
-                    #print("EVEN N, US")
-                    return False
+                #print("ODD N, US")
+                print 'ODD length Unsolvable'
+                return False
+        else:
+            #EVEN, must have:
+            #1) blank on EVEN row & ODD inversions
+            #2) blank on ODD row & EVEN inversions
+            if (y % 2 == 0 and inversions % 2 == 1) or \
+               (y % 2 == 1 and inversions % 2 == 0):
+                #print("EVEN N, S")
+                print 'EVEN length Solvable'
+                return True
+            else:
+                #print("EVEN N, US")
+                print 'EVEN length Unsolvable'
+                return False
                     
             
-            
-
 def reconstruct(currentNode):
     path = []
     current = currentNode    
@@ -372,7 +405,7 @@ if __name__ == "__main__":
     # max_num = n to the power of 2 - 1
     max_num = n ** 2 - 1
 
-    print(lines)
+    #print(lines)
 
     # Instantiate a 2D list of size n x n
     init_state = [[0 for i in range(n)] for j in range(n)]
