@@ -14,11 +14,18 @@ class Node:
         self.state = puzzle
         self.parent = parent
         self.g = 0
+        self.movelist = []
         #if parent exists, increment distance/step from parent's
         if parent is not None:
             self.g = parent.g + 1
+            if self.parent.movelist is None:
+                self.movelist = [moveList[action]]
+            else:
+                self.movelist = copy.deepcopy(self.parent.movelist)
+                self.movelist.append(moveList[action])
         else:
             self.g = 0
+            self.movelist = None
         self.moves = action
         #self.key = self.getNodeKey(self.state.puzzle)
         self.key = int(self.getNodeKey(self.state.puzzle)) + self.g
@@ -76,8 +83,6 @@ class Node:
         linearCon = self.getLinearConflict()
         manTotal = h + linearCon*2
         #self.state.printP()
-        #print 'MAN:', manTotal
-        #print '*'*10
         return manTotal
 
     def getLinearConflict(self):
@@ -309,15 +314,16 @@ class Search:
             #child contains: puzzle, action(int), nodekey
             #child IS NOT A NODE
             for child in children:
-                #print 'MOVE',moveList[child[1]]
+##                print 'MOVE',moveList[child[1]]
                 #check if previously visited child, using nodekey
                 if child[2] in closedList:
                     continue
                 #ticks += 1
-                #print child[2]
+##                print 'key:',child[2]
                 if currNode.moves is not None and child[1] == mMap[currNode.moves]:
-                    #print 'currNode move:',currNode.moves
-                    #print 'child mode:',child[1]
+##                    print 'currNode move:',currNode.moves
+##                    print 'child mode:',child[1]
+##                    print 'SKIP, PREVIOUSLY VISITED'
                     continue
                 newPuz = copy.deepcopy(currNode.state)
                 #change initial state of puzzle only
@@ -325,10 +331,33 @@ class Search:
                 
                 newNode = Node(newPuz, currNode, child[1])
                 if newNode.key in openMap:
-                    continue
+##                    print 'openMap G:', openMap[newNode.key].g
+##                    print 'newNode G:', newNode.g
+                    if openMap[newNode.key].g < newNode.g:
+                        print 'openMap G:', openMap[newNode.key].g
+                        print 'newNode G:', newNode.g
+                        continue
                 #newNode.state.printP()
-                openList.put( (newNode.getHvalue() + newNode.g,\
+                newH = newNode.getHvalue()
+                newG = newNode.g
+                newF = newG + newH
+                openList.put( (newF,\
                                (newNode.key, newNode)) )
+##                print "H:", newH
+##                print "G:", newG
+##                print "F:", newF
+##                print newNode.movelist
+##                if str(newNode.movelist) == \
+##                   '[\'LEFT\', \'UP\', \'UP\', \'LEFT\', \'UP\', \
+##\'RIGHT\', \'RIGHT\', \'RIGHT\', \'DOWN\', \'DOWN\', \
+##\'LEFT\', \'DOWN\', \'RIGHT\', \'UP\', \'LEFT\', \
+##\'LEFT\', \'UP\', \'LEFT\', \'UP\', \'RIGHT\']':
+##                    print "H:", newH
+##                    print "G:", newG
+##                    print "F:", newF
+##                    newNode.state.printP()
+##                    return None
+##                print '*'*10
                 openMap[newNode.key] = newNode
             
         return None
