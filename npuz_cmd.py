@@ -28,7 +28,7 @@ class Node:
             self.movelist = None
         self.moves = action
         #self.key = self.getNodeKey(self.state.puzzle)
-        self.key = int(self.getNodeKey(self.state.puzzle)) + self.g
+        self.key = int(self.getNodeKey(self.state.puzzle))# + self.g
         #print(self.key)
             
     #Returns heuristic 1, no. of misplaced tiles
@@ -334,8 +334,8 @@ class Search:
 ##                    print 'openMap G:', openMap[newNode.key].g
 ##                    print 'newNode G:', newNode.g
                     if openMap[newNode.key].g < newNode.g:
-                        print 'openMap G:', openMap[newNode.key].g
-                        print 'newNode G:', newNode.g
+##                        print 'openMap G:', openMap[newNode.key].g
+##                        print 'newNode G:', newNode.g
                         continue
                 #newNode.state.printP()
                 newH = newNode.getHvalue()
@@ -351,7 +351,9 @@ class Search:
 ##                   '[\'LEFT\', \'UP\', \'UP\', \'LEFT\', \'UP\', \
 ##\'RIGHT\', \'RIGHT\', \'RIGHT\', \'DOWN\', \'DOWN\', \
 ##\'LEFT\', \'DOWN\', \'RIGHT\', \'UP\', \'LEFT\', \
-##\'LEFT\', \'UP\', \'LEFT\', \'UP\', \'RIGHT\']':
+##\'LEFT\', \'UP\', \'LEFT\', \'UP\', \'RIGHT\', \
+##\'RIGHT\', \'DOWN\', \'RIGHT\', \'DOWN\', \'LEFT\', \
+##\'LEFT\', \'UP\', \'UP\', \'RIGHT\', \'RIGHT\']':
 ##                    print "H:", newH
 ##                    print "G:", newG
 ##                    print "F:", newF
