@@ -234,7 +234,7 @@ class Node:
                 #print 'New', '(',y,x,')', y1, x1
                 children.append( (tempPuzzle,\
                                 action, \
-                                str(tempPuzzle)) )
+                                self.getNodeKey(tempPuzzle)) )
             
         return children
         
@@ -305,6 +305,10 @@ class Search:
 
             #Won't visit same state
             closedList[nodeKey] = 1
+##            print 'xxx'*8
+##            for i in closedList:
+##                print i
+##            print 'xxx'*8
             if currNode.isGoalState():
                 #print(stepCount)
                 print 'Total steps:', stepCount
@@ -316,14 +320,14 @@ class Search:
             for child in children:
 ##                print 'MOVE',moveList[child[1]]
                 #check if previously visited child, using nodekey
+                #print child[2]
                 if child[2] in closedList:
                     continue
                 #ticks += 1
 ##                print 'key:',child[2]
                 if currNode.moves is not None and child[1] == mMap[currNode.moves]:
-##                    print 'currNode move:',currNode.moves
-##                    print 'child mode:',child[1]
-##                    print 'SKIP, PREVIOUSLY VISITED'
+                    #print 'SKIP, PREVIOUSLY VISITED'
+                    #print 'b', child[2]
                     continue
                 newPuz = copy.deepcopy(currNode.state)
                 #change initial state of puzzle only
@@ -331,13 +335,15 @@ class Search:
                 
                 newNode = Node(newPuz, currNode, child[1])
                 if newNode.key in openMap:
-##                    print 'openMap G:', openMap[newNode.key].g
-##                    print 'newNode G:', newNode.g
+                    #print 'openMap G:', openMap[newNode.key].g
+                    #print 'newNode G:', newNode.g
                     if openMap[newNode.key].g < newNode.g:
-##                        print 'openMap G:', openMap[newNode.key].g
-##                        print 'newNode G:', newNode.g
+                        #print 'openMap G:', openMap[newNode.key].g
+                        #print 'newNode G:', newNode.g
                         continue
-                #newNode.state.printP()
+                    #elif newNode.g < openMap[newNode.key].g:
+                        #print 'openMap G:', openMap[newNode.key].g
+                        #print 'newNode G:', newNode.g
                 newH = newNode.getHvalue()
                 newG = newNode.g
                 newF = newG + newH
