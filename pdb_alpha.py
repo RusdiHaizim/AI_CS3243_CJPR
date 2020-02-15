@@ -29,6 +29,8 @@ pdb352b = {6:0, 7:0, 8:0, 9:0, 10:0}
 pdb353a = {0:0, 11:0, 12:0, 13:0, 14:0, 15:0}
 pdb353b = {11:0, 12:0, 13:0, 14:0, 15:0}
 
+lock = threading.Lock()
+
 def getP3(puzzle, pattern):
     output = ''
     tempMap = {}
@@ -47,15 +49,34 @@ def getP3(puzzle, pattern):
                 #print 'num',puzzle[i][j],i,j
     while not pq.empty():
         key = pq.get()[1]
-        output += tempMap[key]
+        output += str(tempMap[key])
         #print 'keyB', key, 'value', tempMap[key]
     return output
+
 def setFormattedPuzzle(puzzle, pattern):
     for i in range(len(puzzle)):
         for j in range(len(puzzle)):
             if puzzle[i][j] not in pattern:
                 puzzle[i][j] = -1
 
+def locPrint(*arg):
+    lock.acquire()
+    try:
+        for i in arg:
+            print i
+    finally:
+        lock.release()
+
+def getStr(puzzle):
+    output = ''
+    for i in range(len(puzzle)):
+        for j in range(len(puzzle)):
+            output += str(puzzle[i][j])
+            if j != len(puzzle) - 1:
+                output += ' '
+        output += '\n'
+    return output
+    
 ###
 class Node:
     #PDB node contains
@@ -257,9 +278,7 @@ class Puzzle:
     def printP(self):
         for i in range(0, self.size):
             for j in range(0, self.size):
-                #print(self.puzzle[i][j], " ",end="")
                 print self.puzzle[i][j],
-            #print("")
             print ""
             
     #check if Goal is reached
@@ -274,28 +293,34 @@ class Search:
 
     def generatePDB(self):
         qu = Queue()
+        threadA = threading.Thread(target=self.generate4x4,\
+                               name="T1",\
+                               args=[pdb351a,pdb351b,PDB4_5,qu,'A']\
+                               )
+        threadB = threading.Thread(target=self.generate4x4,\
+                               name="T2",\
+                               args=[pdb352a,pdb352b,PDB4_5,qu,'B']\
+                               )
+        threadC = threading.Thread(target=self.generate4x4,\
+                               name="T3",\
+                               args=[pdb353a,pdb353b,PDB4_5,qu,'C']\
+                               )
+        threadA.start()
+        threadB.start()
+        threadC.start()
+        threadA.join()
+        threadB.join()
+        threadC.join()
 ##        threadA = threading.Thread(target=self.generate4x4,\
 ##                               name="T1",\
-##                               args=[pdb351a,pdb351b,PDB4_5,qu,'A']\
-##                               )
-##        threadB = threading.Thread(target=self.generate4x4,\
-##                               name="T2",\
-##                               args=[pdb352a,pdb352b,PDB4_5,qu,'B']\
-##                               )
-##        threadC = threading.Thread(target=self.generate4x4,\
-##                               name="T3",\
-##                               args=[pdb353a,pdb353b,PDB4_5,qu,'C']\
+##                               args=[pdb33a,pdb33b,PDB4_3,qu,'3']\
 ##                               )
 ##        threadA.start()
-##        threadB.start()
-##        threadC.start()
 ##        threadA.join()
-##        threadB.join()
-##        threadC.join()
-##        return qu.get()
+        return qu.get()
         ### 3-6-6
         #For 3 partition
-        #return self.generate4x4(pdb33a,pdb33b,PDB4_3)
+        #return self.generate4x4(pdb33a,pdb33b,PDB4_3,qu,'3')
         #For 6a partition
         #return self.generate4x4(pdb361a,pdb361b,PDB4_6)
         #For 6b partition
@@ -304,18 +329,19 @@ class Search:
         #For 5a partition
         #return self.generate4x4(pdb351a,pdb351b,PDB4_5)
         #For 5b partition
-        return self.generate4x4(pdb352a,pdb352b,PDB4_5,qu,'B')
+        #return self.generate4x4(pdb352a,pdb352b,PDB4_5,qu,'B')
         #For 5c partition
         #return self.generate4x4(pdb353a,pdb353b,PDB4_5)
         #print 'test'
     
     
     def generate4x4(self, patternZero, patternHash, LIMIT, qu, filename):
-        currNode = self.startNode
+        currNode = copy.deepcopy(self.startNode)
         #Replace 'useless' tiles with '-1'
         setFormattedPuzzle(currNode.state.puzzle, patternZero)
         currNode.key = currNode.getNodeKey(currNode.state.puzzle)
-        currNode.state.printP()
+        #currNode.state.printP()
+        locPrint(getStr(currNode.state.puzzle))
         ## 4 Data structures
         # 1) openList - PQ to store next nodes to pop
         # 2) openMap - Dict to prune off scrub nodes
@@ -326,10 +352,9 @@ class Search:
         #Start from goal state
         openList.put(currNode)
         #To prune stuff on the Q
-        openMap = {}
-        openMap[currNode.key] = currNode
+        openMap = {currNode.key:currNode.g}
         #Visited list: key(patternZero), value(cost)
-        closedList = {}
+        closedList = {getP3(currNode.state.puzzle, patternZero):0}
         #Visited list wo blank: key(patternHash), value(cost)
         p3 = {getP3(currNode.state.puzzle, patternHash):0}
         #print getP3(currNode.state.puzzle, patternHash)
@@ -338,26 +363,24 @@ class Search:
         sA=0; sB=0; sC=0; sD=0
         flag = True
         while True:
-            sys.stdout.flush()
             stepCount += 1
-            if stepCount % 20000 == 0:
+            if stepCount % 10000 == 0:
                 #print("step:", stepCount)
                 #print "step:", stepCount, 'thread', filename
                 s = 'step ' + str(stepCount) + ' thread ' + filename
                 s += ' size ' + str(len(p3))
-                sys.stdout.write(s + '\n')
+                #sys.stdout.write(s + '\n')
+                locPrint(s)
 ##                print 'hashTable size',len(p3),'openList size',openList.qsize()
 ##                print 'c1',sA,'c2',sB,'c3',sC,'c4',sD
             if openList.empty():
                 print "EMPTY FRONTIER, help"
                 return None
             currNode = openList.get()
-            patKey = getP3(currNode.state.puzzle, patternZero)
 ##                if flag:
 ##                    print patKey
 ##                    flag = False
-            closedList[patKey] = currNode.cost
-            if len(p3) >= 50000:
+            if len(p3) >= LIMIT:
             #if len(p3) >= 2000:
                 print 'FINISHED'
                 self.storeHash(p3, filename)
@@ -378,7 +401,7 @@ class Search:
                     continue
                 ### CHECK TWO
                 if child[4] in openMap:
-                    if openMap[child[4]].g <= currNode.g + 1:
+                    if openMap[child[4]] <= currNode.g + 1:
                         sB += 1
                         continue
                 ### CHECK THREE
@@ -405,7 +428,8 @@ class Search:
                 newNode = Node(newPuz, currNode, child[1])
                 newNode.cost += child[3]
                 openList.put(newNode)
-                openMap[newNode.key] = newNode
+                openMap[newNode.key] = newNode.g
+                closedList[child[2]] = currNode.cost + child[3]
         print 'GG end of while loop'
         return None
     
