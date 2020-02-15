@@ -50,6 +50,11 @@ def getP3(puzzle, pattern):
         output += tempMap[key]
         #print 'keyB', key, 'value', tempMap[key]
     return output
+def setFormattedPuzzle(puzzle, pattern):
+    for i in range(len(puzzle)):
+        for j in range(len(puzzle)):
+            if puzzle[i][j] not in pattern:
+                puzzle[i][j] = -1
 
 ###
 class Node:
@@ -76,7 +81,7 @@ class Node:
             self.g = 0
             self.movelist = None
         self.moves = action
-        self.key = int(self.getNodeKey(self.state.puzzle))
+        self.key = str(self.getNodeKey(self.state.puzzle))
             
     def getHvalue(self):
         return self.getManhattanValue()
@@ -236,7 +241,7 @@ class Node:
                                 action, \
                                 newKey, \
                                   cost, \
-                                  int(self.getNodeKey(tempPuzzle))) )
+                                  str(self.getNodeKey(tempPuzzle))) )
         return children
             
         
@@ -269,25 +274,25 @@ class Search:
 
     def generatePDB(self):
         qu = Queue()
-        threadA = threading.Thread(target=self.generate4x4,\
-                               name="T1",\
-                               args=[pdb351a,pdb351b,PDB4_5,qu,'A']\
-                               )
-        threadB = threading.Thread(target=self.generate4x4,\
-                               name="T2",\
-                               args=[pdb352a,pdb352b,PDB4_5,qu,'B']\
-                               )
-        threadC = threading.Thread(target=self.generate4x4,\
-                               name="T3",\
-                               args=[pdb353a,pdb353b,PDB4_5,qu,'C']\
-                               )
-        threadA.start()
-        threadB.start()
-        threadC.start()
-        threadA.join()
-        threadB.join()
-        threadC.join()
-        return qu.get()
+##        threadA = threading.Thread(target=self.generate4x4,\
+##                               name="T1",\
+##                               args=[pdb351a,pdb351b,PDB4_5,qu,'A']\
+##                               )
+##        threadB = threading.Thread(target=self.generate4x4,\
+##                               name="T2",\
+##                               args=[pdb352a,pdb352b,PDB4_5,qu,'B']\
+##                               )
+##        threadC = threading.Thread(target=self.generate4x4,\
+##                               name="T3",\
+##                               args=[pdb353a,pdb353b,PDB4_5,qu,'C']\
+##                               )
+##        threadA.start()
+##        threadB.start()
+##        threadC.start()
+##        threadA.join()
+##        threadB.join()
+##        threadC.join()
+##        return qu.get()
         ### 3-6-6
         #For 3 partition
         #return self.generate4x4(pdb33a,pdb33b,PDB4_3)
@@ -299,7 +304,7 @@ class Search:
         #For 5a partition
         #return self.generate4x4(pdb351a,pdb351b,PDB4_5)
         #For 5b partition
-        #return self.generate4x4(pdb352a,pdb352b,PDB4_5,qu,'B')
+        return self.generate4x4(pdb352a,pdb352b,PDB4_5,qu,'B')
         #For 5c partition
         #return self.generate4x4(pdb353a,pdb353b,PDB4_5)
         #print 'test'
@@ -307,6 +312,15 @@ class Search:
     
     def generate4x4(self, patternZero, patternHash, LIMIT, qu, filename):
         currNode = self.startNode
+        #Replace 'useless' tiles with '-1'
+        setFormattedPuzzle(currNode.state.puzzle, patternZero)
+        currNode.key = currNode.getNodeKey(currNode.state.puzzle)
+        currNode.state.printP()
+        ## 4 Data structures
+        # 1) openList - PQ to store next nodes to pop
+        # 2) openMap - Dict to prune off scrub nodes
+        # 3) closedList - Dict to track pattern config with 0
+        # 4) p3 - Dict to track pattern config without 0
         #Frontier to pop off more nodes
         openList = Queue()
         #Start from goal state
@@ -328,9 +342,12 @@ class Search:
             stepCount += 1
             if stepCount % 20000 == 0:
                 #print("step:", stepCount)
-                print "step:", stepCount
-                print 'hashTable size',len(p3),'openList size',openList.qsize()
-                print 'c1',sA,'c2',sB,'c3',sC,'c4',sD
+                #print "step:", stepCount, 'thread', filename
+                s = 'step ' + str(stepCount) + ' thread ' + filename
+                s += ' size ' + str(len(p3))
+                sys.stdout.write(s + '\n')
+##                print 'hashTable size',len(p3),'openList size',openList.qsize()
+##                print 'c1',sA,'c2',sB,'c3',sC,'c4',sD
             if openList.empty():
                 print "EMPTY FRONTIER, help"
                 return None
