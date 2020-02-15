@@ -9,9 +9,23 @@ moveList = ["UP", "DOWN", "LEFT", "RIGHT"]
 mMap = [1, 0, 3, 2]
 finalGoal = []
 PDB4_3 = 3360
+PDB4_6 = 5765760
+PDB4_5 = 524160
 FINISHED = -1
+#3-6-6 partition
 pdb33a = {0:0, 2:0, 3:0, 4:0}
 pdb33b = {2:0, 3:0, 4:0}
+pdb361a = {0:0, 1:0, 5:0, 6:0, 9:0, 10:0, 13:0}
+pdb361b = {1:0, 5:0, 6:0, 9:0, 10:0, 13:0}
+pdb362a = {0:0, 7:0, 8:0, 11:0, 12:0, 14:0, 15:0}
+pdb362b = {7:0, 8:0, 11:0, 12:0, 14:0, 15:0}
+#5-5-5 partition
+pdb351a = {0:0, 1:0, 2:0, 3:0, 4:0, 5:0}
+pdb351b = {1:0, 2:0, 3:0, 4:0, 5:0}
+pdb352a = {0:0, 6:0, 7:0, 8:0, 9:0, 10:0}
+pdb352b = {6:0, 7:0, 8:0, 9:0, 10:0}
+pdb353a = {0:0, 11:0, 12:0, 13:0, 14:0, 15:0}
+pdb353b = {11:0, 12:0, 13:0, 14:0, 15:0}
 
 def getP3(puzzle, pattern):
     output = ''
@@ -248,79 +262,100 @@ class Search:
     def __init__(self, puzzle):
         self.startNode = Node(puzzle)
 
-    def generate4x4(self):
+    def generatePDB(self):
+        ### 3-6-6
+        #For 3 partition
+        #return self.generate4x4(pdb33a,pdb33b,PDB4_3)
+        #For 6a partition
+        return self.generate4x4(pdb361a,pdb361b,PDB4_6)
+        #For 6b partition
+        #return self.generate4x4(pdb362a,pdb362b,PDB4_6)
+        ### 5-5-5
+        #For 5a partition
+        return self.generate4x4(pdb351a,pdb351b,PDB4_5)
+        #For 5b partition
+        #return self.generate4x4(pdb352a,pdb352b,PDB4_5)
+        #For 5c partition
+        #return self.generate4x4(pdb353a,pdb353b,PDB4_5)
+        #print 'test'
+
+    def generate4x4(self, patternZero, patternHash, LIMIT):
         currNode = self.startNode
         #Frontier to pop off more nodes
         openList = Queue()
         #Start from goal state
         openList.put(currNode)
-        #Visited list: key(2d key), value(node.g)
-        #closedList = {12131444:0}
-        #Visited list wo blank: key(pdb33a), value(cost)
-        p3 = {121314:0}
+        #To prune stuff on the Q
+        openMap = {}
+        openMap[currNode.key] = currNode
+        #Visited list: key(patternZero), value(cost)
+        closedList = {getP3(currNode.state.puzzle, patternZero):0}
+        #Visited list wo blank: key(patternHash), value(cost)
+        p3 = {getP3(currNode.state.puzzle, patternHash):0}
         #pdb33a: 0, pdb33b: no 0
         stepCount = 0
+        sA=0; sB=0; sC=0; sD=0
         while True:
             stepCount += 1
             if stepCount % 10000 == 0:
                 #print("step:", stepCount)
                 print "step:", stepCount
-                print 'hashTable size', len(p3)
+                print 'hashTable size',len(p3),'openList size',openList.qsize()
+                print 'c1',sA,'c2',sB,'c3',sC,'c4',sD
             if openList.empty():
                 print "EMPTY FRONTIER, help"
                 return None
             currNode = openList.get()
-            patKey = getP3(currNode.state.puzzle, pdb33a)
-            #set visited list to curr dist
-            #if visited with less g, then prune that search branch
-            #closedList[currNode.key] = currNode.g
-            #if len(p3) >= PDB4_3:
-            if len(p3) >= 1000:
+            patKey = getP3(currNode.state.puzzle, patternZero)
+            closedList[patKey] = currNode.cost
+            if len(p3) >= LIMIT:
+            #if len(p3) >= 2000:
                 print 'FINISHED'
                 self.storeHash(p3)
                 return FINISHED
             #child: puzzle, action(int), patternkey0, cost, nodekey
-            for child in currNode.getNeighbour(pdb33b, pdb33a):
+            for child in currNode.getNeighbour(patternHash, patternZero):
+                # Perform 4 checks
+                # 1) Minimise previous movements back to parent
+                # 2) Check openMap, prune g <= existing key's g
+                # 3) Check closedlist, prune greater costs
+                # 4) Check p3, update p3 if cost is lower
+                
+                ### CHECK ONE
                 if currNode.moves is not None and child[1] == mMap[currNode.moves]:
                     #print 'b: prevMove'
+                    sA += 1
                     continue
+                ### CHECK TWO
+                if child[4] in openMap:
+                    if openMap[child[4]].g <= currNode.g + 1:
+                        sB += 1
+                        continue
+                ### CHECK THREE
+                if child[2] in closedList:
+                    if currNode.cost + child[3] < closedList[child[2]]:
+                        sC += 1
+                        #Update region cost to lower one
+                        closedList[child[2]] = currNode.cost + child[3]
+                    else:
+                        #We don't want similar nodes inside openList
+                        continue
+                hashKey = getP3(child[0], patternHash)
+                ### CHECK FOUR
+                if hashKey in p3:
+                    if currNode.cost + child[3] < p3[hashKey]:
+                        sD += 1
+                        #Update hashTable to lower one
+                        p3[hashKey] = currNode.cost + child[3]
+                else:
+                    p3[hashKey] = currNode.cost + child[3]
+                #Finally, copy previous node
                 newPuz = copy.deepcopy(currNode.state)
                 newPuz.puzzle = child[0]
                 newNode = Node(newPuz, currNode, child[1])
                 newNode.cost += child[3]
-                hashKey = getP3(child[0], pdb33b)
-                
-##                print '*'*10
-##                newNode.state.printP()
-##                print 'key0:', child[2]
-##                print 'step:', newNode.g, 'dir:', moveList[child[1]]
-##                print 'hashCost:', newNode.cost
-##                print '*'*10
-                
-##                if child[4] in closedList and closedList[child[4]] <= newNode.g:
-##                    #prune search if less than g
-##                    #print 'a: closedList'
-##                    #print 'closedList', child[4],'old',closedList[child[4]],'new',newNode.g
-##                    del newNode, newPuz
-##                    continue
-##                elif child[4] in closedList and closedList[child[4]] > newNode.g:
-##                    print 'wow'
-                
-                #print hashKey
-                if hashKey in p3:
-                    if p3[hashKey] < newNode.cost:
-                        #print 'hashTable: same'
-                        continue
-                    elif newNode.cost < p3[hashKey]:
-##                        print 'hashTable: lower g changed!'
-##                        newNode.state.printP()
-##                        print 'old',p3[hashKey],'new',newNode.cost
-##                        print 'g', newNode.g, newNode.movelist
-##                        print currNode.cost
-                        p3[hashKey] = newNode.cost
-                else:
-                    p3[hashKey] = newNode.cost 
                 openList.put(newNode)
+                openMap[newNode.key] = newNode
         print 'GG end of while loop'
         return None
     
@@ -473,7 +508,7 @@ if __name__ == "__main__":
     puzzle.printP()
     #Solve the puzzle
     search = Search(puzzle)
-    result = search.generate4x4()
+    result = search.generatePDB()
     if result is None:
         print 'END OF Q'
     elif result == FINISHED:
