@@ -14,6 +14,7 @@ finalGoal = []
 PDB4_3 = 3360
 PDB4_6 = 5765760
 PDB4_5 = 524160
+START = -2
 FINISHED = -1
 #3-6-6 partition
 pdb33a = {0:0, 2:0, 3:0, 4:0}
@@ -31,6 +32,7 @@ pdb353a = {0:0, 11:0, 12:0, 13:0, 14:0, 15:0}
 pdb353b = {11:0, 12:0, 13:0, 14:0, 15:0}
 
 lock = threading.Lock()
+procDic = {}
 
 def getP3(puzzle, pattern):
     output = ''
@@ -293,8 +295,10 @@ class Search:
         self.startNode = Node(puzzle)
 
     def generatePDB(self):
+        temp = START
         qu = Queue()
-        threadA = Process(target=self.generate4x4,\
+        #qu.put(temp)
+        threadA =  Process(target=self.generate4x4,\
                           name="T1",\
                           args=[pdb351a,pdb351b,PDB4_5,qu,'A']\
                           )
@@ -302,23 +306,25 @@ class Search:
                           name="T2",\
                           args=[pdb352a,pdb352b,PDB4_5,qu,'B']\
                           )
-        threadC = Process(target=self.generate4x4,\
-                          name="T3",\
-                          args=[pdb353a,pdb353b,PDB4_5,qu,'C']\
-                          )
+##        threadC = Process(target=self.generate4x4,\
+##                          name="T3",\
+##                          args=[pdb353a,pdb353b,PDB4_5,qu,'C']\
+##                          )
         threadA.start()
         threadB.start()
-        threadC.start()
+##        threadC.start()
+        #output = qu.get()
+        #print output
         threadA.join()
         threadB.join()
-        threadC.join()
+##        threadC.join()
 ##        threadA = threading.Thread(target=self.generate4x4,\
 ##                               name="T1",\
 ##                               args=[pdb33a,pdb33b,PDB4_3,qu,'3']\
 ##                               )
 ##        threadA.start()
 ##        threadA.join()
-        return qu.get()
+        return FINISHED
         ### 3-6-6
         #For 3 partition
         #return self.generate4x4(pdb33a,pdb33b,PDB4_3,qu,'3')
@@ -342,7 +348,7 @@ class Search:
         setFormattedPuzzle(currNode.state.puzzle, patternZero)
         currNode.key = currNode.getNodeKey(currNode.state.puzzle)
         #currNode.state.printP()
-        locPrint(getStr(currNode.state.puzzle))
+        #locPrint(getStr(currNode.state.puzzle))
         ## 4 Data structures
         # 1) openList - PQ to store next nodes to pop
         # 2) openMap - Dict to prune off scrub nodes
@@ -381,11 +387,12 @@ class Search:
 ##                if flag:
 ##                    print patKey
 ##                    flag = False
-            if len(p3) >= LIMIT:
-            #if len(p3) >= 2000:
-                print 'FINISHED'
+            #if len(p3) >= LIMIT:
+            if len(p3) >= 2000:
+                print 'FINISHED', filename
                 self.storeHash(p3, filename)
-                qu.put(FINISHED)
+                procDic[FINISHED] = FINISHED
+                #qu.put(FINISHED)
                 return FINISHED
             #child: puzzle, action(int), patternkey0, cost, nodekey
             for child in currNode.getNeighbour(patternHash, patternZero):
@@ -585,7 +592,7 @@ if __name__ == "__main__":
     search = Search(puzzle)
     result = search.generatePDB()
     if result is None:
-        print 'END OF Q'
+        print 'GG END'
     elif result == FINISHED:
         print 'DONE GENERATING PDB'
         

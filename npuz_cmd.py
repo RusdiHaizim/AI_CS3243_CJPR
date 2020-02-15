@@ -1,13 +1,27 @@
 import os
 import sys
 import copy
+import json
 from Queue import PriorityQueue, Queue
 from math import sqrt
 
 moveList = ["UP", "DOWN", "LEFT", "RIGHT"]
 mMap = [1, 0, 3, 2]
 finalGoal = []
-
+field5a = {}
+field5b = {}
+field5c = {}
+try:
+    f = open('generated_db/pdbTestA.json', 'r')
+    field5a = json.load(f)
+    f = open('generated_db/pdbTestB.json', 'r')
+    field5b = json.load(f)
+    f = open('generated_db/pdbTestC.json', 'r')
+    field5c = json.load(f)
+except IOError:
+    print 'CANT LOAD FILE'
+finally:
+    f.close()
 ###
 class Node:
     def __init__(self, puzzle, parent=None, action=None):
@@ -37,21 +51,31 @@ class Node:
         #return self.getMisplacedValue()
         
         #Slightly less scrub heuristic
-        return self.getManhattanValue()
+        #return self.getManhattanValue()
 
-        #Testing Euclid heuristic
-        #return self.getEuclideanValue()*1.01
-        
-        #Legit Combined
-        #h3 = self.getEuclideanValue() + self.getManhattanValue()
-        #h3 /= 2
-        #return h3
-
-        #Tes
-        #h5 = self.getMisplacedValue() + self.getManhattanValue() + self.getEuclideanValue()
-        #h5 /= 3
-        #return h5
-
+        #Trying pdb
+        return self.getPDB()
+    def getPDB(self):
+        h = 0
+        size = len(self.state.puzzle)
+        p15 = ['0']*(size**2)
+        for i in range(0, size):
+            for j in range(0, size):
+                num = self.state.puzzle[i][j]
+                output = str(i+1)
+                output += str(j+1)
+                p15[num] = output
+        pA = '';pB = '';pC = ''
+        for i in range(1,6):
+            pA += p15[i]
+        for i in range(6,11):
+            pB += p15[i]
+        for i in range(11,16):
+            pC += p15[i]
+        #print pA, pB, pC
+        out = field5a[pA] + field5b[pB] + field5c[pC]
+        #print out
+        return out
     def getMisplacedValue(self):
         h = 0
         size = len(self.state.puzzle)
