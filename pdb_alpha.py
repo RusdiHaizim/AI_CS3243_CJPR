@@ -2,8 +2,10 @@ import os
 import sys
 import json
 import copy
+import threading
 from Queue import PriorityQueue, Queue
 from math import sqrt
+from collections import OrderedDict 
 
 moveList = ["UP", "DOWN", "LEFT", "RIGHT"]
 mMap = [1, 0, 3, 2]
@@ -30,8 +32,10 @@ pdb353b = {11:0, 12:0, 13:0, 14:0, 15:0}
 def getP3(puzzle, pattern):
     output = ''
     tempMap = {}
+    pq = PriorityQueue()
     for key in pattern:
         tempMap[key] = 0
+        pq.put((key, key))
         #print 'keyA', key
     for i in range(len(puzzle)):
         for j in range(len(puzzle)):
@@ -41,7 +45,8 @@ def getP3(puzzle, pattern):
                 temp += str(j+1)
                 tempMap[puzzle[i][j]] = temp
                 #print 'num',puzzle[i][j],i,j
-    for key in tempMap:
+    while not pq.empty():
+        key = pq.get()[1]
         output += tempMap[key]
         #print 'keyB', key, 'value', tempMap[key]
     return output
@@ -263,23 +268,44 @@ class Search:
         self.startNode = Node(puzzle)
 
     def generatePDB(self):
+        qu = Queue()
+        threadA = threading.Thread(target=self.generate4x4,\
+                               name="T1",\
+                               args=[pdb351a,pdb351b,PDB4_5,qu,'A']\
+                               )
+        threadB = threading.Thread(target=self.generate4x4,\
+                               name="T2",\
+                               args=[pdb352a,pdb352b,PDB4_5,qu,'B']\
+                               )
+        threadC = threading.Thread(target=self.generate4x4,\
+                               name="T3",\
+                               args=[pdb353a,pdb353b,PDB4_5,qu,'C']\
+                               )
+        threadA.start()
+        threadB.start()
+        threadC.start()
+        threadA.join()
+        threadB.join()
+        threadC.join()
+        return qu.get()
         ### 3-6-6
         #For 3 partition
         #return self.generate4x4(pdb33a,pdb33b,PDB4_3)
         #For 6a partition
-        return self.generate4x4(pdb361a,pdb361b,PDB4_6)
+        #return self.generate4x4(pdb361a,pdb361b,PDB4_6)
         #For 6b partition
         #return self.generate4x4(pdb362a,pdb362b,PDB4_6)
         ### 5-5-5
         #For 5a partition
-        return self.generate4x4(pdb351a,pdb351b,PDB4_5)
+        #return self.generate4x4(pdb351a,pdb351b,PDB4_5)
         #For 5b partition
-        #return self.generate4x4(pdb352a,pdb352b,PDB4_5)
+        #return self.generate4x4(pdb352a,pdb352b,PDB4_5,qu,'B')
         #For 5c partition
         #return self.generate4x4(pdb353a,pdb353b,PDB4_5)
         #print 'test'
-
-    def generate4x4(self, patternZero, patternHash, LIMIT):
+    
+    
+    def generate4x4(self, patternZero, patternHash, LIMIT, qu, filename):
         currNode = self.startNode
         #Frontier to pop off more nodes
         openList = Queue()
@@ -289,15 +315,18 @@ class Search:
         openMap = {}
         openMap[currNode.key] = currNode
         #Visited list: key(patternZero), value(cost)
-        closedList = {getP3(currNode.state.puzzle, patternZero):0}
+        closedList = {}
         #Visited list wo blank: key(patternHash), value(cost)
         p3 = {getP3(currNode.state.puzzle, patternHash):0}
+        #print getP3(currNode.state.puzzle, patternHash)
         #pdb33a: 0, pdb33b: no 0
         stepCount = 0
         sA=0; sB=0; sC=0; sD=0
+        flag = True
         while True:
+            sys.stdout.flush()
             stepCount += 1
-            if stepCount % 10000 == 0:
+            if stepCount % 20000 == 0:
                 #print("step:", stepCount)
                 print "step:", stepCount
                 print 'hashTable size',len(p3),'openList size',openList.qsize()
@@ -307,11 +336,15 @@ class Search:
                 return None
             currNode = openList.get()
             patKey = getP3(currNode.state.puzzle, patternZero)
+##                if flag:
+##                    print patKey
+##                    flag = False
             closedList[patKey] = currNode.cost
-            if len(p3) >= LIMIT:
+            if len(p3) >= 50000:
             #if len(p3) >= 2000:
                 print 'FINISHED'
-                self.storeHash(p3)
+                self.storeHash(p3, filename)
+                qu.put(FINISHED)
                 return FINISHED
             #child: puzzle, action(int), patternkey0, cost, nodekey
             for child in currNode.getNeighbour(patternHash, patternZero):
@@ -359,8 +392,8 @@ class Search:
         print 'GG end of while loop'
         return None
     
-    def storeHash(self, hashTable):
-        with open('pdbTest.json', 'w') as f:
+    def storeHash(self, hashTable, filename):
+        with open('pdbTest' + filename +'.json', 'w') as f:
             json.dump(hashTable, f, indent=4, sort_keys=True)
                         
             
