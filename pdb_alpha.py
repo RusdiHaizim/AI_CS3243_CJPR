@@ -3,6 +3,7 @@ import sys
 import json
 import copy
 import threading
+from multiprocessing import Process
 from Queue import PriorityQueue, Queue
 from math import sqrt
 from collections import OrderedDict 
@@ -293,18 +294,18 @@ class Search:
 
     def generatePDB(self):
         qu = Queue()
-        threadA = threading.Thread(target=self.generate4x4,\
-                               name="T1",\
-                               args=[pdb351a,pdb351b,PDB4_5,qu,'A']\
-                               )
-        threadB = threading.Thread(target=self.generate4x4,\
-                               name="T2",\
-                               args=[pdb352a,pdb352b,PDB4_5,qu,'B']\
-                               )
-        threadC = threading.Thread(target=self.generate4x4,\
-                               name="T3",\
-                               args=[pdb353a,pdb353b,PDB4_5,qu,'C']\
-                               )
+        threadA = Process(target=self.generate4x4,\
+                          name="T1",\
+                          args=[pdb351a,pdb351b,PDB4_5,qu,'A']\
+                          )
+        threadB = Process(target=self.generate4x4,\
+                          name="T2",\
+                          args=[pdb352a,pdb352b,PDB4_5,qu,'B']\
+                          )
+        threadC = Process(target=self.generate4x4,\
+                          name="T3",\
+                          args=[pdb353a,pdb353b,PDB4_5,qu,'C']\
+                          )
         threadA.start()
         threadB.start()
         threadC.start()
