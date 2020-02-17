@@ -12,8 +12,8 @@ moveList = ["UP", "DOWN", "LEFT", "RIGHT"]
 mMap = [1, 0, 3, 2]
 finalGoal = []
 PDB4_3 = 3360
-PDB4_6 = 5765760
 PDB4_5 = 524160
+PDB5_6 = 127512000
 START = -2
 FINISHED = -1
 #3-6-6 partition
@@ -30,6 +30,15 @@ pdb352a = {0:0, 6:0, 7:0, 8:0, 9:0, 10:0}
 pdb352b = {6:0, 7:0, 8:0, 9:0, 10:0}
 pdb353a = {0:0, 11:0, 12:0, 13:0, 14:0, 15:0}
 pdb353b = {11:0, 12:0, 13:0, 14:0, 15:0}
+#6-6-6-6 partition
+pdb561a = {0:0, 1:0, 2:0, 3:0, 6:0, 7:0, 8:0}
+pdb561b = {1:0, 2:0, 3:0, 6:0, 7:0, 8:0}
+pdb562a = {0:0, 4:0, 5:0, 9:0, 10:0, 14:0, 15:0}
+pdb562b = {4:0, 5:0, 9:0, 10:0, 14:0, 15:0}
+pdb563a = {0:0, 13:0, 18:0, 19:0, 20:0, 23:0, 24:0}
+pdb563b = {13:0, 18:0, 19:0, 20:0, 23:0, 24:0}
+pdb564a = {0:0, 11:0, 12:0, 16:0, 17:0, 21:0, 22:0}
+pdb564b = {11:0, 12:0, 16:0, 17:0, 21:0, 22:0}
 
 lock = threading.Lock()
 procDic = {}
@@ -298,25 +307,31 @@ class Search:
         temp = START
         qu = Queue()
         #qu.put(temp)
-        threadA =  Process(target=self.generate4x4,\
-                          name="T1",\
-                          args=[pdb351a,pdb351b,PDB4_5,qu,'A']\
-                          )
-        threadB = Process(target=self.generate4x4,\
-                          name="T2",\
-                          args=[pdb352a,pdb352b,PDB4_5,qu,'B']\
-                          )
+##        threadA =  Process(target=self.generate4x4,\
+##                          name="T1",\
+##                          args=[pdb351a,pdb351b,PDB4_5,qu,'A']\
+##                          )
+##        threadB = Process(target=self.generate4x4,\
+##                          name="T2",\
+##                          args=[pdb352a,pdb352b,PDB4_5,qu,'B']\
+##                          )
 ##        threadC = Process(target=self.generate4x4,\
 ##                          name="T3",\
 ##                          args=[pdb353a,pdb353b,PDB4_5,qu,'C']\
 ##                          )
-        threadA.start()
-        threadB.start()
+        proc56a = Process(target=self.generate4x4,\
+                          name="P1",\
+                          args=[pdb561a,pdb561b,PDB5_6,qu,'6A']\
+                          )
+        proc56a.start()
+        proc56a.join()
+##        threadA.start()
+##        threadB.start()
 ##        threadC.start()
         #output = qu.get()
         #print output
-        threadA.join()
-        threadB.join()
+##        threadA.join()
+##        threadB.join()
 ##        threadC.join()
 ##        threadA = threading.Thread(target=self.generate4x4,\
 ##                               name="T1",\
@@ -387,8 +402,8 @@ class Search:
 ##                if flag:
 ##                    print patKey
 ##                    flag = False
-            #if len(p3) >= LIMIT:
-            if len(p3) >= 2000:
+            if len(p3) >= 50000:
+            #if len(p3) >= 2000:
                 print 'FINISHED', filename
                 self.storeHash(p3, filename)
                 procDic[FINISHED] = FINISHED
@@ -575,7 +590,7 @@ if __name__ == "__main__":
 ##            json.dump(data, f)
 ##    finally:
 ##        f.close()
-    n = 4
+    n = 5
     max_num = n ** 2 - 1
     goal_state = [[0 for i in range(n)] for j in range(n)]
 

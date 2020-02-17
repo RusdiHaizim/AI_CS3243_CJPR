@@ -22,11 +22,15 @@ except IOError:
     print 'CANT LOAD FILE'
 finally:
     f.close()
+ticks = 1
+INVALID = 0
+FOUND = -1
 ###
 class Node:
     def __init__(self, puzzle, parent=None, action=None):
         self.state = puzzle
         self.parent = parent
+        self.tick = 1
         self.g = 0
         self.movelist = []
         #if parent exists, increment distance/step from parent's
@@ -43,7 +47,6 @@ class Node:
         self.moves = action
         #self.key = self.getNodeKey(self.state.puzzle)
         self.key = int(self.getNodeKey(self.state.puzzle))# + self.g
-        #print(self.key)
             
     #Returns heuristic 1, no. of misplaced tiles
     def getHvalue(self):
@@ -51,10 +54,11 @@ class Node:
         #return self.getMisplacedValue()
         
         #Slightly less scrub heuristic
-        #return self.getManhattanValue()
+        return self.getManhattanValue()
 
         #Trying pdb
-        return self.getPDB()
+        #return self.getPDB()
+    
     def getPDB(self):
         h = 0
         size = len(self.state.puzzle)
@@ -229,7 +233,7 @@ class Node:
 
     def getChildren(self):
         #children contains a child(of 3 elements)
-        #child contains: puzzle, action(str), nodekey
+        #child contains: puzzle, action(int), nodekey
         children = []
         (y, x) = self.findZero(self.state.puzzle)
         #print("Original", "(y, x)", y, x)
@@ -288,24 +292,70 @@ class Puzzle:
 class Search:
     def __init__(self, puzzle):
         self.startNode = Node(puzzle)
-    
-    def aStarOne(self):
-        #ticks = 0
+        self.goalNode = Node(puzzle)
+        self.counter = 0
+
+    def idaStart(self):
         currNode = self.startNode
-        
         if self.checkSolvable(currNode.state.puzzle) == False:
             return None
-        
+        threshold = currNode.getHvalue()
+        steps = 0
+        while True:
+            #returns int
+            steps += 1
+            temp = self.idaSearch(currNode, currNode.g, threshold)
+            if temp == FOUND:
+                print 'steps', steps
+                return FOUND
+            threshold = temp
+            
+
+    def idaSearch(self, node, g, threshold):
+        self.counter += 1
+##        print '-'*10
+##        node.state.printP()
+##        print '-'*10
+        newF = g + node.getHvalue()
+        if newF > threshold:
+            #print 'new, old', newF, threshold
+            return newF
+        if node.isGoalState():
+            print 'counter', self.counter
+            node.state.printP()
+            self.goalNode = node
+            return FOUND
+        minF = sys.maxint
+        for child in node.getChildren():
+            #child contains: puzzle, action(int), nodekey
+            if node.moves is not None and child[1] == mMap[node.moves]:
+                continue
+            newPuz = copy.deepcopy(node.state)
+            newPuz.puzzle = child[0]
+            tempNode = Node(newPuz, node, child[1])
+            temp = self.idaSearch(tempNode, tempNode.g, threshold)
+            if temp == FOUND:
+                return FOUND
+            if temp < minF:
+                minF = temp
+        return minF
+            
+    
+    def aStarOne(self):
+        global ticks
+        currNode = self.startNode
+        if self.checkSolvable(currNode.state.puzzle) == False:
+            return None
         openList = PriorityQueue()
-        openList.put((currNode.getHvalue(), (currNode.key, currNode)))
+        openList.put((currNode.getHvalue(), (currNode.key, currNode.tick, currNode)))
         closedList = {}
         openMap = {}
         openMap[currNode.key] = currNode
-
+        #print currNode.key
         stepCount = 0
         while True:
             stepCount += 1
-            if stepCount % 10000 == 0:
+            if stepCount % 20000 == 0:
                 #print("step:", stepCount)
                 print "step:", stepCount
             #Check frontier
@@ -322,7 +372,11 @@ class Search:
 ##                    print(" - "*2)
 ##                print("~"*8)
             
-            currNode = openList.get()[1][1]
+            currNode = openList.get()[1][2]
+            if currNode.tick == INVALID:
+                #print 'INVALID'
+                del currNode
+                continue
             #Check if goal
             nodeKey = currNode.key
             #print(nodeKey)
@@ -336,18 +390,20 @@ class Search:
             if currNode.isGoalState():
                 #print(stepCount)
                 print 'Total steps:', stepCount
+                self.goalNode = currNode
                 return currNode
             
             children = currNode.getChildren()
             #child contains: puzzle, action(int), nodekey
             #child IS NOT A NODE
             for child in children:
+                ticks += 1
 ##                print 'MOVE',moveList[child[1]]
                 #check if previously visited child, using nodekey
                 #print child[2]
                 if child[2] in closedList:
+                    print 'rip'
                     continue
-                #ticks += 1
 ##                print 'key:',child[2]
                 if currNode.moves is not None and child[1] == mMap[currNode.moves]:
                     #print 'SKIP, PREVIOUSLY VISITED'
@@ -358,38 +414,22 @@ class Search:
                 newPuz.puzzle = child[0]
                 
                 newNode = Node(newPuz, currNode, child[1])
+                newNode.tick = ticks
+                #need update openList, set to invalid so that childs dont expand
                 if newNode.key in openMap:
-                    #print 'openMap G:', openMap[newNode.key].g
-                    #print 'newNode G:', newNode.g
-                    if openMap[newNode.key].g < newNode.g:
-                        #print 'openMap G:', openMap[newNode.key].g
-                        #print 'newNode G:', newNode.g
+                    if openMap[newNode.key].g <= newNode.g:
+                        #print newNode.key,'open:','new:',openMap[newNode.key].g, newNode.g
                         continue
-                    #elif newNode.g < openMap[newNode.key].g:
-                        #print 'openMap G:', openMap[newNode.key].g
-                        #print 'newNode G:', newNode.g
+                    elif newNode.g < openMap[newNode.key].g:
+                        #print 'ticks',openMap[newNode.key].tick
+                        openMap[newNode.key].tick = INVALID
+                        openMap[newNode.key] = newNode
+                        #print newNode.key,'open:','new:',openMap[newNode.key].g, newNode.g
                 newH = newNode.getHvalue()
                 newG = newNode.g
                 newF = newG + newH
                 openList.put( (newF,\
-                               (newNode.key, newNode)) )
-##                print "H:", newH
-##                print "G:", newG
-##                print "F:", newF
-##                print newNode.movelist
-##                if str(newNode.movelist) == \
-##                   '[\'LEFT\', \'UP\', \'UP\', \'LEFT\', \'UP\', \
-##\'RIGHT\', \'RIGHT\', \'RIGHT\', \'DOWN\', \'DOWN\', \
-##\'LEFT\', \'DOWN\', \'RIGHT\', \'UP\', \'LEFT\', \
-##\'LEFT\', \'UP\', \'LEFT\', \'UP\', \'RIGHT\', \
-##\'RIGHT\', \'DOWN\', \'RIGHT\', \'DOWN\', \'LEFT\', \
-##\'LEFT\', \'UP\', \'UP\', \'RIGHT\', \'RIGHT\']':
-##                    print "H:", newH
-##                    print "G:", newG
-##                    print "F:", newF
-##                    newNode.state.printP()
-##                    return None
-##                print '*'*10
+                               (newNode.key, newNode.tick, newNode)) )
                 openMap[newNode.key] = newNode
             
         return None
@@ -516,6 +556,12 @@ if __name__ == "__main__":
     #Solve the puzzle
     search = Search(puzzle)
     result = search.aStarOne()
+##    result = search.idaStart()
+##    if result == FOUND:
+##        result = search.goalNode
+##        print 'RESULT is FOUND'
+##    else:
+##        print 'ERROR'
 
     #PROPER USE[3]
     with open(sys.argv[2], 'w') as out:
