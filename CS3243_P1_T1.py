@@ -17,14 +17,19 @@ class Node(object):
     def __init__(self, puzzle, parent=None, move=None):
         self.puzzle = puzzle
         self.parent = parent
-        self.h = self.getH()
+##        self.h = self.getH()
         self.move = move
         self.tick = 1
         self.key = self.getNodeKey(self.puzzle)
-        if parent is not None:
-            self.g = parent.g + 1
-        else:
-            self.g = 0
+##        if parent is not None:
+##            self.g = parent.g + 1
+##        else:
+##            self.g = 0
+    def __hash__(self):
+        return hash(self.key)
+
+    def __eq__(self, other):
+        return (self.key) == (other.key)
     #Swaps the tiles
     def swap(self, data, p1, p2):
         (y1, x1) = p1; (y2, x2) = p2
@@ -55,26 +60,6 @@ class Node(object):
                 if puzzle[i][j] == 0:
                     (y, x) = (i, j)
         return (y, x)
-    #Returns list of potential children<list<tuple>>
-    def getChildren(self):
-        children = []
-        (y, x) = self.findZero(self.puzzle)
-        direction = [(y-1, x), (y+1, x), (y, x-1), (y, x+1)] #UP, DOWN, LEFT, RIGHT
-        for move in range(len(direction)):
-            (y1, x1) = direction[move]
-            validFlag = False
-            if (move == 0 and y > 0) or (move == 1 and y < (len(self.puzzle) - 1)):
-                #Valid to move UP or DOWN
-                validFlag = True
-            elif (move == 2 and x > 0) or (move == 3 and x < (len(self.puzzle) - 1)):
-                #Valid to move LEFT or RIGHT
-                validFlag = True
-            if validFlag == True:
-                tempPuzzle = self.copy()
-                self.swap(tempPuzzle, (y1,x1), (y,x))
-                children.append( (tempPuzzle, move, self.getNodeKey(tempPuzzle)) )
-        #Child(in children) contains: puzzle<2d>, move<int>, nodekey<str>
-        return children
     #Gets the heuristic value of state
     def getH(self):
         return self.getManhattanDistance()
@@ -92,7 +77,7 @@ class Node(object):
                     dist = diffRow + diffCol
                     h += dist
         linearCon = 0
-        #linearCon = self.getLinearConflict()
+        linearCon = self.getLinearConflict()
         return h + (linearCon * 2)
     #Gets the number of Linear Conflicts
     def getLinearConflict(self):
@@ -130,6 +115,29 @@ class Node(object):
                         conflicts += 1
         #print "conflicts:", conflicts
         return conflicts
+
+    #Returns list of potential children<list<tuple>>
+    def getChildren(self):
+        children = []
+        (y, x) = self.findZero(self.puzzle)
+        direction = [(y-1, x), (y+1, x), (y, x-1), (y, x+1)] #UP, DOWN, LEFT, RIGHT
+        for move in range(len(direction)):
+            (y1, x1) = direction[move]
+            validFlag = False
+            if (move == 0 and y > 0) or (move == 1 and y < (len(self.puzzle) - 1)):
+                #Valid to move UP or DOWN
+                validFlag = True
+            elif (move == 2 and x > 0) or (move == 3 and x < (len(self.puzzle) - 1)):
+                #Valid to move LEFT or RIGHT
+                validFlag = True
+            if validFlag == True:
+                tempPuzzle = self.copy()
+                self.swap(tempPuzzle, (y1,x1), (y,x))
+                newNode = Node(tempPuzzle, None, move)
+                children.append(newNode)
+                #children.append( (tempPuzzle, move, self.getNodeKey(tempPuzzle)) )
+        #Child(in children) contains: puzzle<2d>, move<int>, nodekey<str>
+        return children
         
 
 ### Puzzle Class
@@ -192,6 +200,12 @@ class Puzzle(object):
             path.append(moveList[current.move])
             current = current.parent
         return path[::-1]
+    def getPath(self, currNode, cameFrom):
+        output = []
+        while cameFrom[currNode] is not None:
+            output.append(moveList[currNode.move])
+            currNode = cameFrom[currNode]
+        return output[::-1]
     
     #Solves the puzzle using A-STAR
     def solve(self):
@@ -204,8 +218,11 @@ class Puzzle(object):
             return ["UNSOLVABLE"]
         openList = PriorityQueue()
         # 3 Data Structures to keep track of...
-        openList.put((currNode.h, currNode.key, currNode.tick, currNode)) #PQ for frontier
-        openMap = {currNode.key:currNode} #Dictionary for invalidating nodes in frontier
+        #openList.put((currNode.h, currNode.key, currNode.tick, currNode)) #PQ for frontier
+        openList.put((currNode.getH(), currNode))
+        #openMap = {currNode.key:currNode} #Dictionary for invalidating nodes in frontier
+        cameFrom = {currNode:None}
+        costSoFar = {currNode:0}
         #closedList
         steps = 0 #Nodes popped off frontier
         while True:
@@ -215,32 +232,40 @@ class Puzzle(object):
             if openList.empty(): #Empty frontier
                 print 'Empty Queue!'
                 break
-            item = openList.get()
-            if item[2] == INVALID:
-                del item
-                continue
-            currNode = item[3]
+            currNode = openList.get()[1]
+##            item = openList.get()
+##            if item[2] == INVALID:
+##                del item
+##                continue
+##            currNode = item[3]
             if self.isGoalState(currNode.puzzle):
                 print 'Total steps:', steps
-                return self.reconstruct(currNode)
+                return self.getPath(currNode, cameFrom)
+                #return self.reconstruct(currNode)
             for child in currNode.getChildren():
                 #Child(in children) contains: puzzle<2d>, move<int>, nodekey<str>
                 ticks += 1 #Increment unique ID
+                newCost = costSoFar[currNode] + 1
+                if child not in costSoFar or newCost < costSoFar[child]:
+                    costSoFar[child] = newCost
+                    openList.put((newCost+child.getH(), child))
+                    cameFrom[child] = currNode
+                
                 #Do 2 checks
-                if currNode.move is not None and child[1] == mMap[currNode.move]:
-                    #If move back to previous state, SKIP
-                    continue
-                if child[2] in openMap:
-                    #We dont want same or greater distance than current node in openMap
-                    if openMap[child[2]].g <= currNode.g + 1:
-                        continue
-                    else:
-                        #Invalidate current node in openMap/queue
-                        openMap[child[2]].tick = INVALID                    
-                newNode = Node(child[0], currNode, child[1])
-                newNode.tick = ticks
-                openMap[child[2]] = newNode #Adds/Replace with newNode
-                openList.put((newNode.h + newNode.g, newNode.key, newNode.tick, newNode))
+##                if currNode.move is not None and child[1] == mMap[currNode.move]:
+##                    #If move back to previous state, SKIP
+##                    continue
+##                if child[2] in openMap:
+##                    #We dont want same or greater distance than current node in openMap
+##                    if openMap[child[2]].g <= currNode.g + 1:
+##                        continue
+##                    else:
+##                        #Invalidate current node in openMap/queue
+##                        openMap[child[2]].tick = INVALID                    
+##                newNode = Node(child[0], currNode, child[1])
+##                newNode.tick = ticks
+##                openMap[child[2]] = newNode #Adds/Replace with newNode
+##                openList.put((newNode.h + newNode.g, newNode.key, newNode.tick, newNode))
         
         return ["UNSOLVABLE"]
 
