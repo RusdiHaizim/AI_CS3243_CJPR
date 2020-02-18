@@ -2,6 +2,7 @@ import os
 import sys
 import copy
 import json
+from time import time
 from Queue import PriorityQueue, Queue
 from math import sqrt
 
@@ -17,14 +18,14 @@ class Node(object):
     def __init__(self, puzzle, parent=None, move=None):
         self.puzzle = puzzle
         self.parent = parent
-##        self.h = self.getH()
+##        self.h = self.getH()#
         self.move = move
         self.tick = 1
         self.key = self.getNodeKey(self.puzzle)
-##        if parent is not None:
-##            self.g = parent.g + 1
-##        else:
-##            self.g = 0
+##        if parent is not None:#
+##            self.g = parent.g + 1#
+##        else:#
+##            self.g = 0#
     def __hash__(self):
         return hash(self.key)
 
@@ -77,7 +78,7 @@ class Node(object):
                     dist = diffRow + diffCol
                     h += dist
         linearCon = 0
-        linearCon = self.getLinearConflict()
+        #linearCon = self.getLinearConflict()
         return h + (linearCon * 2)
     #Gets the number of Linear Conflicts
     def getLinearConflict(self):
@@ -135,7 +136,7 @@ class Node(object):
                 self.swap(tempPuzzle, (y1,x1), (y,x))
                 newNode = Node(tempPuzzle, None, move)
                 children.append(newNode)
-                #children.append( (tempPuzzle, move, self.getNodeKey(tempPuzzle)) )
+##                children.append( (tempPuzzle, move, self.getNodeKey(tempPuzzle)) )#
         #Child(in children) contains: puzzle<2d>, move<int>, nodekey<str>
         return children
         
@@ -209,6 +210,7 @@ class Puzzle(object):
     
     #Solves the puzzle using A-STAR
     def solve(self):
+        startTime = time()
         #TODO
         # implement your search algorithm here
         global ticks
@@ -217,10 +219,12 @@ class Puzzle(object):
         if self.checkSolvable(currNode.puzzle) == False:
             return ["UNSOLVABLE"]
         openList = PriorityQueue()
-        # 3 Data Structures to keep track of...
-        #openList.put((currNode.h, currNode.key, currNode.tick, currNode)) #PQ for frontier
+        # 2/3 Data Structures to keep track of...
+##        openList.put((currNode.h, currNode)) #PQ for frontier
         openList.put((currNode.getH(), currNode))
         #openMap = {currNode.key:currNode} #Dictionary for invalidating nodes in frontier
+        #openMap = set()
+        #openMap.add(self.tupify(currNode.puzzle))
         cameFrom = {currNode:None}
         costSoFar = {currNode:0}
         #closedList
@@ -233,15 +237,16 @@ class Puzzle(object):
                 print 'Empty Queue!'
                 break
             currNode = openList.get()[1]
-##            item = openList.get()
-##            if item[2] == INVALID:
-##                del item
-##                continue
-##            currNode = item[3]
+##            currNode = openList.get()[1]#
+##            if currNode.tick == INVALID:#
+##                del currNode#
+##                continue#
             if self.isGoalState(currNode.puzzle):
-                print 'Total steps:', steps
+                print 'Total nodes popped:', steps
+                timeTaken = time() - startTime
+                print 'Time taken:', str(timeTaken)
                 return self.getPath(currNode, cameFrom)
-                #return self.reconstruct(currNode)
+##                return self.reconstruct(currNode)#
             for child in currNode.getChildren():
                 #Child(in children) contains: puzzle<2d>, move<int>, nodekey<str>
                 ticks += 1 #Increment unique ID
@@ -254,19 +259,24 @@ class Puzzle(object):
                 #Do 2 checks
 ##                if currNode.move is not None and child[1] == mMap[currNode.move]:
 ##                    #If move back to previous state, SKIP
+##                    print 'a'
 ##                    continue
-##                if child[2] in openMap:
-##                    #We dont want same or greater distance than current node in openMap
-##                    if openMap[child[2]].g <= currNode.g + 1:
-##                        continue
-##                    else:
-##                        #Invalidate current node in openMap/queue
-##                        openMap[child[2]].tick = INVALID                    
 ##                newNode = Node(child[0], currNode, child[1])
-##                newNode.tick = ticks
-##                openMap[child[2]] = newNode #Adds/Replace with newNode
-##                openList.put((newNode.h + newNode.g, newNode.key, newNode.tick, newNode))
-        
+##                if self.tupify(newNode.puzzle) in openMap:
+##                    continue
+####                    #We dont want same or greater distance than current node in openMap
+####                    if newNode.g <= currNode.g + 1:
+####                        continue
+####                    else:
+####                        #Invalidate current node in openMap/queue
+####                        openMap[child[2]].tick = INVALID                    
+##                
+##                #newNode.tick = ticks
+##                openMap.add(self.tupify(newNode.puzzle)) #Adds/Replace with newNode
+##                openList.put((newNode.h + newNode.g, newNode))
+                
+        timeTaken = time() - startTime
+        print 'Time taken:', str(timeTaken)
         return ["UNSOLVABLE"]
 
     # you may add more functions if you think is useful
@@ -276,6 +286,11 @@ class Puzzle(object):
             for j in range(len(self.init_state)):
                 print self.init_state[i][j],
             print ""
+    def tupify(self, puzzle):
+        output = []
+        for i in puzzle:
+            output.append(tuple(i))
+        return tuple(output)
 
 if __name__ == "__main__":
     # do NOT modify below
@@ -290,7 +305,7 @@ if __name__ == "__main__":
         f = open(sys.argv[1], 'r')
     except IOError:
         raise IOError("Input file not found!")
-
+    
     lines = f.readlines()
     
     # n = num rows in input file
