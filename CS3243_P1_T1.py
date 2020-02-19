@@ -15,9 +15,8 @@ FOUND = -1
 ### Node Class
 # Inputs: puzzle(2d array), parent node(if any), <int>move(if any)
 class Node(object):
-    def __init__(self, puzzle, parent=None, move=None):
+    def __init__(self, puzzle, move=None):
         self.puzzle = puzzle
-        self.parent = parent
 ##        self.h = self.getH()#
         self.move = move
         self.tick = 1
@@ -78,7 +77,7 @@ class Node(object):
                     dist = diffRow + diffCol
                     h += dist
         linearCon = 0
-        #linearCon = self.getLinearConflict()
+        linearCon = self.getLinearConflict()
         return h + (linearCon * 2)
     #Gets the number of Linear Conflicts
     def getLinearConflict(self):
@@ -134,7 +133,7 @@ class Node(object):
             if validFlag == True:
                 tempPuzzle = self.copy()
                 self.swap(tempPuzzle, (y1,x1), (y,x))
-                newNode = Node(tempPuzzle, None, move)
+                newNode = Node(tempPuzzle, move)
                 children.append(newNode)
 ##                children.append( (tempPuzzle, move, self.getNodeKey(tempPuzzle)) )#
         #Child(in children) contains: puzzle<2d>, move<int>, nodekey<str>
