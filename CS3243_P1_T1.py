@@ -19,10 +19,10 @@ class Node(object):
         self.puzzle = puzzle
         self.move = move
         self.tick = 1
-        self.key = str(self.getNodeKey(self.puzzle))
+        self.key = int(self.getNodeKey(self.puzzle))
         
     def __hash__(self):
-        return hash(self.key)
+        return self.key#hash(self.key)
     def __eq__(self, other):
         return self.key == other.key
     #Swaps the tiles
@@ -209,9 +209,9 @@ class Puzzle(object):
         # implement your search algorithm here
         global ticks
         currNode = Node(self.init_state)
-        print 'hash', hash(currNode.key)
-        newNode = copy.deepcopy(currNode)
-        print 'hash', hash(newNode.key)
+##        print 'hash', hash(currNode.key)
+##        newNode = copy.deepcopy(currNode)
+##        print 'hash', hash(newNode.key)
         self.printP()
         if self.checkSolvable(currNode.puzzle) == False:
             return ["UNSOLVABLE"]
