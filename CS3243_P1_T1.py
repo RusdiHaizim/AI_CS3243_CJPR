@@ -219,7 +219,7 @@ class Puzzle(object):
         openList = PriorityQueue()
         openList.put((currNode.getH(), currNode))
         cameFrom = {currNode:None}
-        costSoFar = {currNode:0}
+        costSoFar = {currNode.key:0}
         #closedList
         steps = 0 #Nodes popped off frontier
         while True:
@@ -239,9 +239,9 @@ class Puzzle(object):
             for child in currNode.getChildren():
                 #Child is now a Node
                 ticks += 1 #Increment unique ID
-                newCost = costSoFar[currNode] + 1
-                if child not in costSoFar or newCost < costSoFar[child]:
-                    costSoFar[child] = newCost
+                newCost = costSoFar[currNode.key] + 1
+                if child.key not in costSoFar or newCost < costSoFar[child.key]:
+                    costSoFar[child.key] = newCost
                     openList.put((newCost+child.getH(), child))
                     cameFrom[child] = currNode
         timeTaken = time() - startTime
