@@ -17,19 +17,14 @@ FOUND = -1
 class Node(object):
     def __init__(self, puzzle, move=None):
         self.puzzle = puzzle
-##        self.h = self.getH()#
         self.move = move
         self.tick = 1
-        self.key = self.getNodeKey(self.puzzle)
-##        if parent is not None:#
-##            self.g = parent.g + 1#
-##        else:#
-##            self.g = 0#
+        self.key = str(self.getNodeKey(self.puzzle))
+        
     def __hash__(self):
         return hash(self.key)
-
     def __eq__(self, other):
-        return (self.key) == (other.key)
+        return self.key == other.key
     #Swaps the tiles
     def swap(self, data, p1, p2):
         (y1, x1) = p1; (y2, x2) = p2
@@ -136,7 +131,7 @@ class Node(object):
                 newNode = Node(tempPuzzle, move)
                 children.append(newNode)
 ##                children.append( (tempPuzzle, move, self.getNodeKey(tempPuzzle)) )#
-        #Child(in children) contains: puzzle<2d>, move<int>, nodekey<str>
+        #Child(in children) contains: Node
         return children
         
 
@@ -214,16 +209,15 @@ class Puzzle(object):
         # implement your search algorithm here
         global ticks
         currNode = Node(self.init_state)
+        print 'hash', hash(currNode.key)
+        newNode = copy.deepcopy(currNode)
+        print 'hash', hash(newNode.key)
         self.printP()
         if self.checkSolvable(currNode.puzzle) == False:
             return ["UNSOLVABLE"]
+        # 3 Data Structures to keep track of...
         openList = PriorityQueue()
-        # 2/3 Data Structures to keep track of...
-##        openList.put((currNode.h, currNode)) #PQ for frontier
         openList.put((currNode.getH(), currNode))
-        #openMap = {currNode.key:currNode} #Dictionary for invalidating nodes in frontier
-        #openMap = set()
-        #openMap.add(self.tupify(currNode.puzzle))
         cameFrom = {currNode:None}
         costSoFar = {currNode:0}
         #closedList
@@ -236,10 +230,6 @@ class Puzzle(object):
                 print 'Empty Queue!'
                 break
             currNode = openList.get()[1]
-##            currNode = openList.get()[1]#
-##            if currNode.tick == INVALID:#
-##                del currNode#
-##                continue#
             if self.isGoalState(currNode.puzzle):
                 print 'Total nodes popped:', steps
                 timeTaken = time() - startTime
@@ -247,33 +237,13 @@ class Puzzle(object):
                 return self.getPath(currNode, cameFrom)
 ##                return self.reconstruct(currNode)#
             for child in currNode.getChildren():
-                #Child(in children) contains: puzzle<2d>, move<int>, nodekey<str>
+                #Child is now a Node
                 ticks += 1 #Increment unique ID
                 newCost = costSoFar[currNode] + 1
                 if child not in costSoFar or newCost < costSoFar[child]:
                     costSoFar[child] = newCost
                     openList.put((newCost+child.getH(), child))
                     cameFrom[child] = currNode
-                
-                #Do 2 checks
-##                if currNode.move is not None and child[1] == mMap[currNode.move]:
-##                    #If move back to previous state, SKIP
-##                    print 'a'
-##                    continue
-##                newNode = Node(child[0], currNode, child[1])
-##                if self.tupify(newNode.puzzle) in openMap:
-##                    continue
-####                    #We dont want same or greater distance than current node in openMap
-####                    if newNode.g <= currNode.g + 1:
-####                        continue
-####                    else:
-####                        #Invalidate current node in openMap/queue
-####                        openMap[child[2]].tick = INVALID                    
-##                
-##                #newNode.tick = ticks
-##                openMap.add(self.tupify(newNode.puzzle)) #Adds/Replace with newNode
-##                openList.put((newNode.h + newNode.g, newNode))
-                
         timeTaken = time() - startTime
         print 'Time taken:', str(timeTaken)
         return ["UNSOLVABLE"]
@@ -285,11 +255,6 @@ class Puzzle(object):
             for j in range(len(self.init_state)):
                 print self.init_state[i][j],
             print ""
-    def tupify(self, puzzle):
-        output = []
-        for i in puzzle:
-            output.append(tuple(i))
-        return tuple(output)
 
 if __name__ == "__main__":
     # do NOT modify below
