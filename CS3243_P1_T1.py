@@ -225,13 +225,13 @@ class Puzzle(object):
         while True:
             steps += 1
             if steps % 100000 == 0:
-                print 'step:', steps
+                print 'step:', steps, 'size', openList.qsize()
             if openList.empty(): #Empty frontier
                 print 'Empty Queue!'
                 break
             currNode = openList.get()[1]
             if self.isGoalState(currNode.puzzle):
-                print 'Total nodes popped:', steps
+                print 'Total nodes popped:', steps, 'size', openList.qsize()
                 timeTaken = time() - startTime
                 print 'Time taken:', str(timeTaken)
                 return self.getPath(currNode, cameFrom)
@@ -240,10 +240,14 @@ class Puzzle(object):
                 #Child is now a Node
                 ticks += 1 #Increment unique ID
                 newCost = costSoFar[currNode.key] + 1
+                if currNode.move is not None and mMap[currNode.move] == child.move:
+                    #print 'bad'
+                    continue
                 if child.key not in costSoFar or newCost < costSoFar[child.key]:
                     costSoFar[child.key] = newCost
                     openList.put((newCost+child.getH(), child))
                     cameFrom[child] = currNode
+                
         timeTaken = time() - startTime
         print 'Time taken:', str(timeTaken)
         return ["UNSOLVABLE"]
