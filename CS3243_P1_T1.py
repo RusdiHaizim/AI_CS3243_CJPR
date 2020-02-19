@@ -8,7 +8,6 @@ from math import sqrt
 
 moveList = ["UP", "DOWN", "LEFT", "RIGHT"]
 mMap = [1, 0, 3, 2]
-ticks = 1
 INVALID = 0
 FOUND = -1
 
@@ -20,9 +19,15 @@ class Node(object):
         self.move = move
         #self.tick = 1
         self.key = int(self.getNodeKey(self.puzzle))
-        
+        #self.key = self.tupify(self.puzzle)
+
+    def tupify(self, stateList):
+        outer = []
+        for i in stateList:
+            outer.append(tuple(i))
+        return tuple(outer)    
     def __hash__(self):
-        return self.key#hash(self.key)
+        return hash(self.key)
     def __eq__(self, other):
         return self.key == other.key
     #Swaps the tiles
@@ -58,6 +63,7 @@ class Node(object):
     #Gets the heuristic value of state
     def getH(self):
         return self.getManhattanDistance()
+        #return self.getOutOfLine()
     #Gets the manhattan distance (+Linear Conflict)
     def getManhattanDistance(self):
         h = 0; size = len(self.puzzle)
@@ -72,7 +78,7 @@ class Node(object):
                     dist = diffRow + diffCol
                     h += dist
         linearCon = 0
-        linearCon = self.getLinearConflict()
+        #linearCon = self.getLinearConflict()
         return h + (linearCon * 2)
     #Gets the number of Linear Conflicts
     def getLinearConflict(self):
@@ -110,6 +116,20 @@ class Node(object):
                         conflicts += 1
         #print "conflicts:", conflicts
         return conflicts
+    #Gets the number of tiles that are out of Row and out of Col
+    def getOutOfLine(self):
+        size = len(self.puzzle)
+        out = 0
+        for i in range(size):
+            for j in range(size):
+                num = self.puzzle[i][j]
+                if num == 0:
+                    continue
+                rowGoal = (num - 1) // size
+                colGoal = (num - 1) % size
+                out += (rowGoal != i)
+                out += (colGoal != j)
+        return out
 
     #Returns list of potential children<list<tuple>>
     def getChildren(self):
@@ -205,19 +225,15 @@ class Puzzle(object):
     #Solves the puzzle using A-STAR
     def solve(self):
         startTime = time()
-        #TODO
-        # implement your search algorithm here
-        global ticks
         currNode = Node(self.init_state)
-##        print 'hash', hash(currNode.key)
-##        newNode = copy.deepcopy(currNode)
-##        print 'hash', hash(newNode.key)
         self.printP()
         if self.checkSolvable(currNode.puzzle) == False:
             return ["UNSOLVABLE"]
         # 3 Data Structures to keep track of...
         openList = PriorityQueue()
-        openList.put((currNode.getH(),ticks,currNode))
+        h = currNode.getH()
+        openList.put((h, 0, currNode)) # STABLE
+        #openList.put((h, currNode)) # UNSTABLE
         cameFrom = {currNode:None}
         costSoFar = {currNode:0}
         #closedList
@@ -229,23 +245,24 @@ class Puzzle(object):
             if openList.empty(): #Empty frontier
                 print 'Empty Queue!'
                 break
-            currNode = openList.get()[2]
+            currNode = openList.get()[2] # STABLE
+            #currNode = openList.get()[1] # UNSTABLE
             if self.isGoalState(currNode.puzzle):
                 print 'Total nodes popped:', steps, 'size', openList.qsize()
                 timeTaken = time() - startTime
                 print 'Time taken:', str(timeTaken)
                 return self.getPath(currNode, cameFrom)
-##                return self.reconstruct(currNode)#
             for child in currNode.getChildren():
                 #Child is now a Node
-                ticks += 1 #Increment unique ID
                 newCost = costSoFar[currNode] + 1
                 if currNode.move is not None and mMap[currNode.move] == child.move:
                     #print 'bad'
                     continue
                 if child not in costSoFar or newCost < costSoFar[child]:
                     costSoFar[child] = newCost
-                    openList.put((newCost+child.getH(),ticks,child))
+                    h = child.getH()
+                    openList.put((newCost + h, newCost, child)) #STABLE
+                    #openList.put((newCost +h, child)) # UNSTABLE
                     cameFrom[child] = currNode
                 
         timeTaken = time() - startTime
