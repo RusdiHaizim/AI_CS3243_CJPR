@@ -18,7 +18,7 @@ class Node(object):
     def __init__(self, puzzle, move=None):
         self.puzzle = puzzle
         self.move = move
-        self.tick = 1
+        #self.tick = 1
         self.key = int(self.getNodeKey(self.puzzle))
         
     def __hash__(self):
@@ -32,7 +32,7 @@ class Node(object):
         data[y1][x1] = data[y2][x2]
         data[y2][x2] = temp
     #Returns a copy of 2d array<2d>
-    def copy(self):
+    def getCopy(self):
         copy = []
         for i in range(len(self.puzzle)):
             temp = []
@@ -126,7 +126,7 @@ class Node(object):
                 #Valid to move LEFT or RIGHT
                 validFlag = True
             if validFlag == True:
-                tempPuzzle = self.copy()
+                tempPuzzle = self.getCopy()
                 self.swap(tempPuzzle, (y1,x1), (y,x))
                 newNode = Node(tempPuzzle, move)
                 children.append(newNode)
@@ -217,9 +217,9 @@ class Puzzle(object):
             return ["UNSOLVABLE"]
         # 3 Data Structures to keep track of...
         openList = PriorityQueue()
-        openList.put((currNode.getH(), currNode))
+        openList.put((currNode.getH(),ticks,currNode))
         cameFrom = {currNode:None}
-        costSoFar = {currNode.key:0}
+        costSoFar = {currNode:0}
         #closedList
         steps = 0 #Nodes popped off frontier
         while True:
@@ -229,7 +229,7 @@ class Puzzle(object):
             if openList.empty(): #Empty frontier
                 print 'Empty Queue!'
                 break
-            currNode = openList.get()[1]
+            currNode = openList.get()[2]
             if self.isGoalState(currNode.puzzle):
                 print 'Total nodes popped:', steps, 'size', openList.qsize()
                 timeTaken = time() - startTime
@@ -239,13 +239,13 @@ class Puzzle(object):
             for child in currNode.getChildren():
                 #Child is now a Node
                 ticks += 1 #Increment unique ID
-                newCost = costSoFar[currNode.key] + 1
+                newCost = costSoFar[currNode] + 1
                 if currNode.move is not None and mMap[currNode.move] == child.move:
                     #print 'bad'
                     continue
-                if child.key not in costSoFar or newCost < costSoFar[child.key]:
-                    costSoFar[child.key] = newCost
-                    openList.put((newCost+child.getH(), child))
+                if child not in costSoFar or newCost < costSoFar[child]:
+                    costSoFar[child] = newCost
+                    openList.put((newCost+child.getH(),ticks,child))
                     cameFrom[child] = currNode
                 
         timeTaken = time() - startTime
