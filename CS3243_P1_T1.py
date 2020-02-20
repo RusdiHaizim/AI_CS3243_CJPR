@@ -19,8 +19,8 @@ class Node(object):
         self.puzzle = puzzle
         self.move = move
         self.g = 0
-        #self.tick = 1
-        self.key = str(self.getNodeKey(self.puzzle))
+        self.tick = 0
+        self.key = int(self.getNodeKey(self.puzzle))
         #self.key = self.tupify(self.puzzle)
         self.parent = parent
 
@@ -33,8 +33,8 @@ class Node(object):
         return hash(self.key)
     def __eq__(self, other):
         return self.key == other.key
-    def __lt__(self, other):
-        return self.g < other.g
+##    def __lt__(self, other):
+##        return self.g < other.g
     #Swaps the tiles
     def swap(self, data, p1, p2):
         (y1, x1) = p1; (y2, x2) = p2
@@ -221,6 +221,15 @@ class Puzzle(object):
             path.append(moveList[current.move])
             current = current.parent
         return path[::-1]
+    def getTicks(self, currentNode):
+        path = []
+        current = currentNode    
+        while current is not None:
+            if current.tick == 0:
+                break
+            path.append(current.tick)
+            current = current.parent
+        return path[::-1]
     def getPath(self, currNode, cameFrom):
         output = []
         while cameFrom[currNode] is not None:
@@ -239,7 +248,7 @@ class Puzzle(object):
         # 3 Data Structures to keep track of...
         openList = PriorityQueue()
         h = currNode.getH()
-        openList.put((h, currNode.g, ID, currNode)) # STABLE
+        openList.put((h, currNode.g, currNode)) # STABLE
         #openList.put((h, currNode)) # UNSTABLE
         costSoFar = {currNode:0}
         #closedList
@@ -251,12 +260,14 @@ class Puzzle(object):
             if openList.empty(): #Empty frontier
                 print 'Empty Queue!'
                 break
-            currNode = openList.get()[3] # STABLE
+            currNode = openList.get()[2] # STABLE
             #currNode = openList.get()[1] # UNSTABLE
+            currNode.tick = steps
             if self.isGoalState(currNode.puzzle):
                 print 'Total nodes popped:', steps, 'size', openList.qsize()
                 timeTaken = time() - startTime
                 print 'Time taken:', str(timeTaken)
+                print self.getTicks(currNode)
                 return self.reconstruct(currNode)
             for child in currNode.getChildren(currNode):
                 ID += 1
@@ -266,7 +277,7 @@ class Puzzle(object):
                 if child not in costSoFar or newCost < costSoFar[child]:
                     costSoFar[child] = newCost
                     h = child.getH()
-                    openList.put((newCost + h, newCost, ID, child)) #STABLE
+                    openList.put((newCost + h, newCost, child)) #STABLE
                     #openList.put((newCost + h, child)) # UNSTABLE
                 
         timeTaken = time() - startTime
