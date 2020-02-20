@@ -33,8 +33,8 @@ class Node(object):
         return hash(self.key)
     def __eq__(self, other):
         return self.key == other.key
-##    def __lt__(self, other):
-##        return self.g < other.g
+    def __lt__(self, other):
+        return self.g < other.g
     #Swaps the tiles
     def swap(self, data, p1, p2):
         (y1, x1) = p1; (y2, x2) = p2
@@ -248,6 +248,7 @@ class Puzzle(object):
             return ["UNSOLVABLE"]
         # 3 Data Structures to keep track of...
         openList = PriorityQueue()
+        visited = set()
         h = currNode.getH()
         openList.put((h, currNode.g, ID, currNode)) # STABLEST
         #openList.put((h, currNode.g, currNode)) # sortOfSTABLE
@@ -265,6 +266,7 @@ class Puzzle(object):
             currNode = openList.get()[3] # STABLEST
             #currNode = openList.get()[2] # sortOfSTABLE
             #currNode = openList.get()[1] # UNSTABLE
+            visited.add(currNode)
             if self.isGoalState(currNode.puzzle):
                 print 'Total nodes popped:', steps, 'size', openList.qsize()
                 timeTaken = time() - startTime
@@ -274,15 +276,18 @@ class Puzzle(object):
             for child in currNode.getChildren(currNode):
                 ID += 1
                 #Child is now a Node
-                newCost = costSoFar[currNode] + 1
-                child.g = newCost
+                #newCost = costSoFar[currNode] + 1
+                child.g = currNode.g + 1
+                child.h = child.getH()
                 child.tick = ID;
-                if child not in costSoFar or newCost < costSoFar[child]:
-                    costSoFar[child] = newCost
-                    h = child.getH()
-                    openList.put((newCost + h, h*1.001, newCost, child)) # STABLEST
-                    #openList.put((newCost + h, newCost, child)) # sortOfSTABLE
-                    #openList.put((newCost + h, child)) # UNSTABLE
+                if child not in visited:
+                    openList.put((child.g + child.h, child.g, ID, child))
+##                if child not in costSoFar or newCost < costSoFar[child]:
+##                    costSoFar[child] = newCost
+##                    h = child.getH()
+##                    openList.put((newCost + h, newCost, ID, child)) # STABLEST
+##                    #openList.put((newCost + h, newCost, child)) # sortOfSTABLE
+##                    #openList.put((newCost + h, child)) # UNSTABLE
                 
         timeTaken = time() - startTime
         print 'Time taken:', str(timeTaken)
