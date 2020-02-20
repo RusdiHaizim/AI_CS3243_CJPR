@@ -222,6 +222,7 @@ class Puzzle(object):
             current = current.parent
         return path[::-1]
     def getTicks(self, currentNode):
+        print 'ticks last', currentNode.tick
         path = []
         current = currentNode    
         while current is not None:
@@ -248,7 +249,8 @@ class Puzzle(object):
         # 3 Data Structures to keep track of...
         openList = PriorityQueue()
         h = currNode.getH()
-        openList.put((h, currNode.g, currNode)) # STABLE
+        openList.put((h, currNode.g, ID, currNode)) # STABLEST
+        #openList.put((h, currNode.g, currNode)) # sortOfSTABLE
         #openList.put((h, currNode)) # UNSTABLE
         costSoFar = {currNode:0}
         #closedList
@@ -260,9 +262,9 @@ class Puzzle(object):
             if openList.empty(): #Empty frontier
                 print 'Empty Queue!'
                 break
-            currNode = openList.get()[2] # STABLE
+            currNode = openList.get()[3] # STABLEST
+            #currNode = openList.get()[2] # sortOfSTABLE
             #currNode = openList.get()[1] # UNSTABLE
-            currNode.tick = steps
             if self.isGoalState(currNode.puzzle):
                 print 'Total nodes popped:', steps, 'size', openList.qsize()
                 timeTaken = time() - startTime
@@ -274,10 +276,12 @@ class Puzzle(object):
                 #Child is now a Node
                 newCost = costSoFar[currNode] + 1
                 child.g = newCost
+                child.tick = ID;
                 if child not in costSoFar or newCost < costSoFar[child]:
                     costSoFar[child] = newCost
                     h = child.getH()
-                    openList.put((newCost + h, newCost, child)) #STABLE
+                    openList.put((newCost + h, h*1.001, newCost, child)) # STABLEST
+                    #openList.put((newCost + h, newCost, child)) # sortOfSTABLE
                     #openList.put((newCost + h, child)) # UNSTABLE
                 
         timeTaken = time() - startTime
