@@ -69,12 +69,13 @@ class Node(object):
     #Gets the heuristic value of state
     def getH(self):
         #BIGGEST BOSS (H3)
-        return self.getManhattanDistance() + (2 * self.getLinearConflict())
+        #return self.getManhattanDistance() + (2 * self.getLinearConflict())
         #2nd Big Boss (H2)
-        #return self.getManhattanDistance()
+        return self.getManhattanDistance()
         #Scrub boss (H1a)
         #return self.getOutOfLine()
         #Scrub boss (H1b)
+        #return self.getEuclideanValue()
 
     #Gets the manhattan distance (H2)
     def getManhattanDistance(self):
@@ -274,6 +275,7 @@ class Puzzle(object):
             steps += 1
             if steps % 100000 == 0:
                 print 'step:', steps, 'size', openList.qsize()
+                sys.stdout.flush()
             if openList.empty(): #Empty frontier
                 print 'Empty Queue!'
                 break
@@ -286,6 +288,7 @@ class Puzzle(object):
                 timeTaken = time() - startTime
                 print 'Time taken:', str(timeTaken)
                 print self.getTicks(currNode)
+                sys.stdout.flush()
                 return self.reconstruct(currNode)
             for child in currNode.getChildren(currNode):
                 ID += 1
@@ -357,4 +360,5 @@ if __name__ == "__main__":
         for answer in ans:
             f.write(answer+'\n')
             print answer
+            sys.stdout.flush()
         print "TOTAL", len(ans)
