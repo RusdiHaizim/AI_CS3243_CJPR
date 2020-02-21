@@ -21,26 +21,24 @@ class Node(object):
         self.g = 0
         self.tick = 0
         self.key = int(self.getNodeKey(self.puzzle))
-        #self.key = self.tupify(self.puzzle)
         self.parent = parent
-
-    def tupify(self, stateList):
-        outer = []
-        for i in stateList:
-            outer.append(tuple(i))
-        return tuple(outer)    
+ 
     def __hash__(self):
         return hash(self.key)
+    
     def __eq__(self, other):
         return self.key == other.key
+    
     def __lt__(self, other):
         return self.g < other.g
+    
     #Swaps the tiles
     def swap(self, data, p1, p2):
         (y1, x1) = p1; (y2, x2) = p2
         temp = data[y1][x1]
         data[y1][x1] = data[y2][x2]
         data[y2][x2] = temp
+        
     #Returns a copy of 2d array<2d>
     def getCopy(self):
         copy = []
@@ -50,6 +48,7 @@ class Node(object):
                 temp.append(self.puzzle[i][j])
             copy.append(temp)
         return copy
+    
     #Returns 2d array value in 1d form<str>
     def getNodeKey(self, puzzle):
         output = ''
@@ -57,6 +56,7 @@ class Node(object):
             for j in i:
                 output += str(j)
         return output
+    
     #Return pair containing (y,x) of blank/zero tile
     def findZero(self, puzzle):
         (y, x) = (0, 0)
@@ -65,11 +65,18 @@ class Node(object):
                 if puzzle[i][j] == 0:
                     (y, x) = (i, j)
         return (y, x)
+    
     #Gets the heuristic value of state
     def getH(self):
-        return self.getManhattanDistance()
+        #BIGGEST BOSS (H3)
+        return self.getManhattanDistance() + (2 * self.getLinearConflict())
+        #2nd Big Boss (H2)
+        #return self.getManhattanDistance()
+        #Scrub boss (H1a)
         #return self.getOutOfLine()
-    #Gets the manhattan distance (+Linear Conflict)
+        #Scrub boss (H1b)
+
+    #Gets the manhattan distance (H2)
     def getManhattanDistance(self):
         h = 0; size = len(self.puzzle)
         for i in range(0, size):
@@ -82,10 +89,9 @@ class Node(object):
                     diffCol = abs(colGoal - j)
                     dist = diffRow + diffCol
                     h += dist
-        linearCon = 0
-        linearCon = self.getLinearConflict()
-        return h + (linearCon * 2)
-    #Gets the number of Linear Conflicts
+        return h
+    
+    #Gets the number of Linear Conflicts (H3)
     def getLinearConflict(self):
         size = len(self.puzzle)
         inCol = [0] * (size**2)
@@ -121,7 +127,8 @@ class Node(object):
                         conflicts += 1
         #print "conflicts:", conflicts
         return conflicts
-    #Gets the number of tiles that are out of Row and out of Col
+    
+    #Gets the number of tiles that are out of Row and out of Col (H1a)
     def getOutOfLine(self):
         size = len(self.puzzle)
         out = 0
@@ -135,6 +142,20 @@ class Node(object):
                 out += (rowGoal != i)
                 out += (colGoal != j)
         return out
+
+    #Gets the euclidean distance (H1b)
+    def getEuclideanValue(self):
+        h = 0
+        size = len(self.puzzle)
+        for i in range(size):
+            for j in range(size):
+                num = self.puzzle[i][j]
+                if num != 0:
+                    rowGoal = (num - 1) // size
+                    colGoal = (num - 1) % size
+                    dist = sqrt( (rowGoal - i)**2 + (colGoal - j)**2 )
+                    h += dist
+        return h
 
     #Returns list of potential children<list<tuple>>
     def getChildren(self, currNode):
@@ -153,13 +174,10 @@ class Node(object):
             if validFlag == True:
                 tempPuzzle = self.getCopy()
                 self.swap(tempPuzzle, (y1,x1), (y,x))
-                #newNode = Node(tempPuzzle, move)
                 newNode = Node(tempPuzzle, currNode, move)
                 children.append(newNode)
-##                children.append( (tempPuzzle, move, self.getNodeKey(tempPuzzle)) )#
         #Child(in children) contains: Node
         return children
-        
 
 ### Puzzle Class
 # Inputs: Init State, Goal State
@@ -169,10 +187,12 @@ class Puzzle(object):
         # you may add more attributes if you think is useful
         self.init_state = init_state
         self.goal_state = goal_state
+        
     #Check if Goal is reached
     def isGoalState(self, puzzle):
         if puzzle == goal_state:
             return True
+        
     #Function to check for solvable state
     def checkSolvable(self, puzzle):
         inversions = 0
@@ -185,7 +205,6 @@ class Puzzle(object):
                     (y, x) = (i, j)
                     #print("Y, X", i, j)
                     #print 'Y', 'X', i, j
-
         for i in range(0, len(lineList)-1):
             for j in range(i+1, len(lineList)):
                 if lineList[j] and lineList[i] and lineList[i] > lineList[j]:
@@ -211,6 +230,7 @@ class Puzzle(object):
             else:
                 print 'EVEN length Unsolvable'
                 return False
+            
     #Returns movelist from finalNode
     def reconstruct(self, currentNode):
         path = []
@@ -221,6 +241,8 @@ class Puzzle(object):
             path.append(moveList[current.move])
             current = current.parent
         return path[::-1]
+
+    #Returns child PID
     def getTicks(self, currentNode):
         print 'ticks last', currentNode.tick
         path = []
@@ -231,12 +253,6 @@ class Puzzle(object):
             path.append(current.tick)
             current = current.parent
         return path[::-1]
-    def getPath(self, currNode, cameFrom):
-        output = []
-        while cameFrom[currNode] is not None:
-            output.append(moveList[currNode.move])
-            currNode = cameFrom[currNode]
-        return output[::-1]
     
     #Solves the puzzle using A-STAR
     def solve(self):
@@ -253,8 +269,6 @@ class Puzzle(object):
         openList.put((h, currNode.g, ID, currNode)) # STABLEST
         #openList.put((h, currNode.g, currNode)) # sortOfSTABLE
         #openList.put((h, currNode)) # UNSTABLE
-        costSoFar = {currNode:0}
-        #closedList
         steps = 0 #Nodes popped off frontier
         while True:
             steps += 1
@@ -276,24 +290,17 @@ class Puzzle(object):
             for child in currNode.getChildren(currNode):
                 ID += 1
                 #Child is now a Node
-                #newCost = costSoFar[currNode] + 1
                 child.g = currNode.g + 1
                 child.h = child.getH()
                 child.tick = ID;
                 if child not in visited:
-                    openList.put((child.g + child.h, child.g, ID, child))
-##                if child not in costSoFar or newCost < costSoFar[child]:
-##                    costSoFar[child] = newCost
-##                    h = child.getH()
-##                    openList.put((newCost + h, newCost, ID, child)) # STABLEST
-##                    #openList.put((newCost + h, newCost, child)) # sortOfSTABLE
-##                    #openList.put((newCost + h, child)) # UNSTABLE
-                
+                    openList.put((child.g + child.h, child.g, ID, child)) # STABLEST
+##                    openList.put((newCost + h, newCost, child)) # sortOfSTABLE
+##                    openList.put((newCost + h, child)) # UNSTABLE
         timeTaken = time() - startTime
         print 'Time taken:', str(timeTaken)
         return ["UNSOLVABLE"]
 
-    # you may add more functions if you think is useful
     #Debugging print 2d array
     def printP(self):
         for i in range(len(self.init_state)):
@@ -351,10 +358,3 @@ if __name__ == "__main__":
             f.write(answer+'\n')
             print answer
         print "TOTAL", len(ans)
-
-
-
-
-
-
-
