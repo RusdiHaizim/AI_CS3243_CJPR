@@ -19,7 +19,6 @@ class Node(object):
         self.puzzle = puzzle
         self.move = move
         self.g = 0
-        self.h = 0
         self.tick = 0
         self.key = int(self.getNodeKey(self.puzzle))
         self.parent = parent
@@ -31,7 +30,7 @@ class Node(object):
         return self.key == other.key
     
     def __lt__(self, other):
-        return self.h < other.h
+        return self.g < other.g
     
     #Swaps the tiles
     def swap(self, data, p1, p2):
@@ -70,7 +69,7 @@ class Node(object):
     #Gets the heuristic value of state
     def getH(self):
         #BIGGEST BOSS (H3)
-        #return self.getManhattanDistance() + (2 * self.getLinearConflict())
+        #return self.getLinearConflict()
         #2nd Big Boss (H2)
         #return self.getManhattanDistance()
         #Scrub boss (H1a)
@@ -268,7 +267,9 @@ class Puzzle(object):
         openList = PriorityQueue()
         visited = set()
         h = currNode.getH()
-        openList.put((h, ID, currNode)) # STABLEST
+        openList.put((h, currNode.g, ID, currNode)) # STABLEST
+        #openList.put((h, currNode.g, currNode)) # sortOfSTABLE
+        #openList.put((h, currNode)) # UNSTABLE
         steps = 0 #Nodes popped off frontier
         while True:
             steps += 1
@@ -278,7 +279,9 @@ class Puzzle(object):
             if openList.empty(): #Empty frontier
                 print 'Empty Queue!'
                 break
-            currNode = openList.get()[2] # STABLEST
+            currNode = openList.get()[3] # STABLEST
+            #currNode = openList.get()[2] # sortOfSTABLE
+            #currNode = openList.get()[1] # UNSTABLE
             visited.add(currNode)
             if self.isGoalState(currNode.puzzle):
                 print 'Total nodes popped:', steps, 'size', openList.qsize()
@@ -290,10 +293,11 @@ class Puzzle(object):
             for child in currNode.getChildren(currNode):
                 ID += 1
                 #Child is now a Node
+                child.g = currNode.g + 1
                 child.h = child.getH()
                 child.tick = ID;
                 if child not in visited:
-                    openList.put((child.h, ID, child)) # STABLEST
+                    openList.put((child.g + child.h, child.g, ID, child)) # STABLEST
         timeTaken = time() - startTime
         print 'Time taken:', str(timeTaken)
         return ["UNSOLVABLE"]

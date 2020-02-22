@@ -69,13 +69,13 @@ class Node(object):
     #Gets the heuristic value of state
     def getH(self):
         #BIGGEST BOSS (H3)
-        #return self.getManhattanDistance() + (2 * self.getLinearConflict())
+        #return self.getLinearConflict()
         #2nd Big Boss (H2)
         return self.getManhattanDistance()
         #Scrub boss (H1a)
         #return self.getOutOfLine()
         #Scrub boss (H1b)
-        #return self.getEuclideanValue()
+        #return 0.5*(self.getManhattanDistance()+2*self.getLinearConflict()+self.getEuclideanValue())
 
     #Gets the manhattan distance (H2)
     def getManhattanDistance(self):

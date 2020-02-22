@@ -69,7 +69,7 @@ class Node(object):
     #Gets the heuristic value of state
     def getH(self):
         #BIGGEST BOSS (H3)
-        return self.getManhattanDistance() + (2 * self.getLinearConflict())
+        return self.getLinearConflict()
         #2nd Big Boss (H2)
         #return self.getManhattanDistance()
         #Scrub boss (H1a)
@@ -127,7 +127,7 @@ class Node(object):
                         #Conflict exists!
                         conflicts += 1
         #print "conflicts:", conflicts
-        return conflicts
+        return conflicts*2 + self.getManhattanDistance()
     
     #Gets the number of tiles that are out of Row and out of Col (H1a)
     def getOutOfLine(self):
