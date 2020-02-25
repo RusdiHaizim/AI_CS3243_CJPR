@@ -188,6 +188,10 @@ class Puzzle(object):
         # you may add more attributes if you think is useful
         self.init_state = init_state
         self.goal_state = goal_state
+        self.timeTaken = 0
+        self.nodesPopped = 0
+        self.nodesInside = 0
+        self.finalMoves = 0
         
     #Check if Goal is reached
     def isGoalState(self, puzzle):
@@ -284,12 +288,17 @@ class Puzzle(object):
             #currNode = openList.get()[1] # UNSTABLE
             visited.add(currNode)
             if self.isGoalState(currNode.puzzle):
-                print 'Total nodes popped:', steps, 'size', openList.qsize()
-                timeTaken = time() - startTime
-                print 'Time taken:', str(timeTaken)
+                #print 'Total nodes popped:', steps, 'size', openList.qsize()
+                #timeTaken = time() - startTime
+                #print 'Time taken:', str(timeTaken)
                 #print self.getTicks(currNode)
-                sys.stdout.flush()
-                return self.reconstruct(currNode)
+                #sys.stdout.flush()
+                ans = self.reconstruct(currNode)
+                self.timeTaken = time() - startTime
+                self.nodesPopped = steps
+                self.nodesInside = openList.qsize()
+                self.finalMoves = len(ans)
+                return ans
             for child in currNode.getChildren(currNode):
                 ID += 1
                 #Child is now a Node

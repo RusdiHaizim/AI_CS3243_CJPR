@@ -31,13 +31,22 @@ def scanInput(init, goal, lines, n):
         goal[(i-1)//n][(i-1)%n] = i
     goal[n - 1][n - 1] = 0
 
+def printParams(puzzle):
+    print 'Time taken: ' + str(puzzle.timeTaken)
+    print 'Total nodes popped: ' + str(puzzle.nodesPopped)
+    print 'Size of frontier: ' + str(puzzle.nodesInside)
+    print 'Total moves: ' + str(puzzle.finalMoves)    
+
 #Run 3x3 test cases
 def run_n_equals_3():
-    start = 'new_test_cases/n_equals_3/input_'
-    inputNum = ['1', '2', '3']
-    for x in range(len(inputNum)):
+    fileList = []
+    path = "n_equals_3"
+    for file in os.listdir(path):
+        if file.endswith(".txt"):
+            fileList.append(os.path.join(path, file))
+    for x in range(len(fileList)):
         try:
-            f = open(start + inputNum[x] + '.txt', 'r')
+            f = open(fileList[x], 'r')
         except:
             raise IOError("Input file not found!")
         
@@ -48,30 +57,33 @@ def run_n_equals_3():
         goal = [[0 for i in range(n)] for j in range(n)]
         scanInput(init, goal, lines, n)
 
-        print '*'*20 + ' Starting input ' + inputNum[x] + ' ' + '*'*20
+        print '>'*20 + ' Starting input ' + str(x+1) + ' ' + '>'*20
         printP(init)
 
         print '-'*30 + '\n' + 'Uninformed Search (BFS):'
-        puzzle = algoU.Puzzle(init, goal); ans = puzzle.solve()
+        puzzle = algoU.Puzzle(init, goal); ans = puzzle.solve(); printParams(puzzle)
         print '-'*30 + '\n' + 'Informed Search (A-STAR with Euclidean Distance):'
-        puzzle = algoI1.Puzzle(init, goal); ans = puzzle.solve()
+        puzzle = algoI1.Puzzle(init, goal); ans = puzzle.solve(); printParams(puzzle)
         print '-'*30 + '\n' + 'Informed Search (A-STAR with Manhattan Distance):'
-        puzzle = algoI2.Puzzle(init, goal); ans = puzzle.solve()
+        puzzle = algoI2.Puzzle(init, goal); ans = puzzle.solve(); printParams(puzzle)
         print '-'*30 + '\n' + 'Informed Search (A-STAR with Manhattan Distance PLUS Linear Conflicts):'
-        puzzle = algoI3.Puzzle(init, goal); ans = puzzle.solve()
+        puzzle = algoI3.Puzzle(init, goal); ans = puzzle.solve(); printParams(puzzle)
         
-        print '*'*28 + ' END ' + '*'*28
+        print '<'*28 + ' END ' + '<'*28
 
 #Run 4x4 test cases
 def run_n_equals_4():
-    start = 'new_test_cases/n_equals_4/input_'
-    inputNum = ['1', '2', '3', '4']
-    for x in range(len(inputNum)):
+    fileList = []
+    path = "n_equals_4"
+    for file in os.listdir(path):
+        if file.endswith(".txt"):
+            fileList.append(os.path.join(path, file))
+    for x in range(len(fileList)):
         if x == 1: #takes too long for euclidean to test on local pc
             continue
         
         try:
-            f = open(start + inputNum[x] + '.txt', 'r')
+            f = open(fileList[x], 'r')
         except:
             raise IOError("Input file not found!")
         
@@ -82,27 +94,30 @@ def run_n_equals_4():
         goal = [[0 for i in range(n)] for j in range(n)]
         scanInput(init, goal, lines, n)
 
-        print '*'*20 + ' Starting input ' + inputNum[x] + ' ' + '*'*20
+        print '>'*20 + ' Starting input ' + str(x+1) + ' ' + '>'*20
         printP(init)
 
-        #print '-'*30 + '\n' + 'Uninformed Search (BFS):' #BFS TOO LONG...
-        #puzzle = algoU.Puzzle(init, goal); ans = puzzle.solve()
+##        print '-'*30 + '\n' + 'Uninformed Search (BFS):' #BFS TOO LONG...
+##        puzzle = algoU.Puzzle(init, goal); ans = puzzle.solve(); printParams(puzzle)
         print '-'*30 + '\n' + 'Informed Search (A-STAR with Euclidean Distance):'
-        puzzle = algoI1.Puzzle(init, goal); ans = puzzle.solve()
+        puzzle = algoI1.Puzzle(init, goal); ans = puzzle.solve(); printParams(puzzle)
         print '-'*30 + '\n' + 'Informed Search (A-STAR with Manhattan Distance):'
-        puzzle = algoI2.Puzzle(init, goal); ans = puzzle.solve()
+        puzzle = algoI2.Puzzle(init, goal); ans = puzzle.solve(); printParams(puzzle)
         print '-'*30 + '\n' + 'Informed Search (A-STAR with Manhattan Distance PLUS Linear Conflicts):'
-        puzzle = algoI3.Puzzle(init, goal); ans = puzzle.solve()
+        puzzle = algoI3.Puzzle(init, goal); ans = puzzle.solve(); printParams(puzzle)
         
-        print '*'*28 + ' END ' + '*'*28
+        print '<'*28 + ' END ' + '<'*28
 
 #Run 5x5 test cases
 def run_n_equals_5():
-    start = 'new_test_cases/n_equals_5/input_'
-    inputNum = ['1', '2', '3', '4', '5']
-    for x in range(len(inputNum)):
+    fileList = []
+    path = "n_equals_5"
+    for file in os.listdir(path):
+        if file.endswith(".txt"):
+            fileList.append(os.path.join(path, file))
+    for x in range(len(fileList)):
         try:
-            f = open(start + inputNum[x] + '.txt', 'r')
+            f = open(fileList[x], 'r')
         except:
             raise IOError("Input file not found!")
         
@@ -113,19 +128,19 @@ def run_n_equals_5():
         goal = [[0 for i in range(n)] for j in range(n)]
         scanInput(init, goal, lines, n)
 
-        print '*'*20 + ' Starting input ' + inputNum[x] + ' ' + '*'*20
+        print '>'*20 + ' Starting input ' + str(x+1) + ' ' + '>'*20
         printP(init)
 
-        #print '-'*30 + '\n' + 'Uninformed Search (BFS):' #BFS TOO LONG...
-        #puzzle = algoU.Puzzle(init, goal); ans = puzzle.solve()
+##        print '-'*30 + '\n' + 'Uninformed Search (BFS):' #BFS TOO LONG...
+##        puzzle = algoU.Puzzle(init, goal); ans = puzzle.solve(); printParams(puzzle)
         print '-'*30 + '\n' + 'Informed Search (A-STAR with Euclidean Distance):'
-        puzzle = algoI1.Puzzle(init, goal); ans = puzzle.solve()
+        puzzle = algoI1.Puzzle(init, goal); ans = puzzle.solve(); printParams(puzzle)
         print '-'*30 + '\n' + 'Informed Search (A-STAR with Manhattan Distance):'
-        puzzle = algoI2.Puzzle(init, goal); ans = puzzle.solve()
+        puzzle = algoI2.Puzzle(init, goal); ans = puzzle.solve(); printParams(puzzle)
         print '-'*30 + '\n' + 'Informed Search (A-STAR with Manhattan Distance PLUS Linear Conflicts):'
-        puzzle = algoI3.Puzzle(init, goal); ans = puzzle.solve()
+        puzzle = algoI3.Puzzle(init, goal); ans = puzzle.solve(); printParams(puzzle)
         
-        print '*'*28 + ' END ' + '*'*28
+        print '<'*28 + ' END ' + '<'*28
 
 
 if __name__ == "__main__":
