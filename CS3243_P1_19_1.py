@@ -94,7 +94,7 @@ class Puzzle(object):
         
     #Check if Goal is reached
     def isGoalState(self, puzzle):
-        if puzzle == goal_state:
+        if puzzle == self.goal_state:
             return True
         
     #Function to check for solvable state
@@ -114,14 +114,14 @@ class Puzzle(object):
                 if lineList[j] and lineList[i] and lineList[i] > lineList[j]:
                     inversions += 1
         del lineList
-        print 'INVERSIONS:', inversions
+        #print 'INVERSIONS:', inversions
         if len(puzzle) % 2 == 1:
             #ODD, must have even inversions
             if (inversions % 2) == 0:
-                print 'ODD length Solvable'
+                #print 'ODD length Solvable'
                 return True
             else:
-                print 'ODD length Unsolvable'
+                #print 'ODD length Unsolvable'
                 return False
         else:
             #EVEN, must have:
@@ -129,10 +129,10 @@ class Puzzle(object):
             #2) blank on ODD row & EVEN inversions
             if (y % 2 == 0 and inversions % 2 == 1) or \
                (y % 2 == 1 and inversions % 2 == 0):
-                print 'EVEN length Solvable'
+                #print 'EVEN length Solvable'
                 return True
             else:
-                print 'EVEN length Unsolvable'
+                #print 'EVEN length Unsolvable'
                 return False
             
     #Returns movelist from finalNode
@@ -162,7 +162,7 @@ class Puzzle(object):
     def solve(self):
         startTime = time()
         currNode = Node(self.init_state)
-        self.printP()
+        #self.printP()
         if self.checkSolvable(currNode.puzzle) == False:
             return ["UNSOLVABLE"]
         # 3 Data Structures to keep track of...
@@ -172,9 +172,9 @@ class Puzzle(object):
         steps = 0 #Nodes popped off frontier
         while True:
             steps += 1
-            if steps % 100000 == 0:
-                print 'step:', steps, 'size', openList.qsize()
-                sys.stdout.flush()
+##            if steps % 100000 == 0:
+##                print 'step:', steps, 'size', openList.qsize()
+##                sys.stdout.flush()
             if openList.empty(): #Empty frontier
                 print 'Empty Queue!'
                 break
