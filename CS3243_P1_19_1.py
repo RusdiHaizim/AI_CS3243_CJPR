@@ -146,7 +146,7 @@ class Puzzle(object):
         while current is not None:
             if current.move is None:
                 break
-            path.append(moveList[current.move])
+            path.append(moveList[mMap[current.move]])
             current = current.parent
         return path[::-1]
 
