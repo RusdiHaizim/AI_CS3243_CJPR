@@ -41,7 +41,7 @@ def printParams(puzzle):
 def run_n_equals_3():
     fileList = []
     path = "n_equals_3"
-    for file in os.listdir(path):
+    for file in sorted(os.listdir(path)):
         if file.endswith(".txt"):
             fileList.append(os.path.join(path, file))
     for x in range(len(fileList)):
@@ -75,7 +75,7 @@ def run_n_equals_3():
 def run_n_equals_4():
     fileList = []
     path = "n_equals_4"
-    for file in os.listdir(path):
+    for file in sorted(os.listdir(path)):
         if file.endswith(".txt"):
             fileList.append(os.path.join(path, file))
     for x in range(len(fileList)):
@@ -112,7 +112,7 @@ def run_n_equals_4():
 def run_n_equals_5():
     fileList = []
     path = "n_equals_5"
-    for file in os.listdir(path):
+    for file in sorted(os.listdir(path)):
         if file.endswith(".txt"):
             fileList.append(os.path.join(path, file))
     for x in range(len(fileList)):
