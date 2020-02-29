@@ -79,8 +79,8 @@ def run_n_equals_4():
         if file.endswith(".txt"):
             fileList.append(os.path.join(path, file))
     for x in range(len(fileList)):
-        if x == 1: #takes too long for euclidean to test on local pc
-            continue
+##        if x == 1: #takes too long for euclidean to test on local pc
+##            continue
         
         try:
             f = open(fileList[x], 'r')
@@ -145,8 +145,8 @@ def run_n_equals_5():
 
 if __name__ == "__main__":
     # do NOT modify below
-    run_n_equals_3()
+##    run_n_equals_3()
     run_n_equals_4()
-    run_n_equals_5()
+##    run_n_equals_5()
     
     

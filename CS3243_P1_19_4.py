@@ -272,8 +272,6 @@ class Puzzle(object):
         visited = set()
         h = currNode.getH()
         openList.put((h, currNode.g, ID, currNode)) # STABLEST
-        #openList.put((h, currNode.g, currNode)) # sortOfSTABLE
-        #openList.put((h, currNode)) # UNSTABLE
         steps = 0 #Nodes popped off frontier
         while True:
             steps += 1
@@ -284,15 +282,8 @@ class Puzzle(object):
                 print 'Empty Queue!'
                 break
             currNode = openList.get()[3] # STABLEST
-            #currNode = openList.get()[2] # sortOfSTABLE
-            #currNode = openList.get()[1] # UNSTABLE
             visited.add(currNode)
             if self.isGoalState(currNode.puzzle):
-                #print 'Total nodes popped:', steps, 'size', openList.qsize()
-                #timeTaken = time() - startTime
-                #print 'Time taken:', str(timeTaken)
-                #print self.getTicks(currNode)
-                #sys.stdout.flush()
                 ans = self.reconstruct(currNode)
                 self.timeTaken = time() - startTime
                 self.nodesPopped = steps
@@ -307,8 +298,6 @@ class Puzzle(object):
                 child.tick = ID;
                 if child not in visited:
                     openList.put((child.g + child.h, child.g, ID, child)) # STABLEST
-##                    openList.put((newCost + h, newCost, child)) # sortOfSTABLE
-##                    openList.put((newCost + h, child)) # UNSTABLE
         timeTaken = time() - startTime
         print 'Time taken:', str(timeTaken)
         return ["UNSOLVABLE"]
