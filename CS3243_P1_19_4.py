@@ -18,6 +18,7 @@ class Node(object):
     def __init__(self, puzzle, parent=None, move=None):
         self.puzzle = puzzle
         self.move = move
+        self.h = 0
         self.g = 0
         self.tick = 0
         self.key = int(self.getNodeKey(self.puzzle))
@@ -30,7 +31,11 @@ class Node(object):
         return self.key == other.key
     
     def __lt__(self, other):
-        return self.g < other.g
+        if self.g != other.g:
+            return self.g < other.g
+        if self.h != other.h:
+            return self.h < other.h
+        return self.tick < other.tick
     
     #Swaps the tiles
     def swap(self, data, p1, p2):
@@ -98,14 +103,18 @@ class Node(object):
         inCol = [0] * (size**2)
         inRow = [0] * (size**2)
         conflicts = 0
+        manD = 0
         #Precompute bools for numbers in right row and col
         for y in range(size):
             for x in range(size):
                 num = self.puzzle[y][x]
-                rowGoal = (num - 1) // size
-                colGoal = (num - 1) % size
-                inRow[num] = rowGoal
-                inCol[num] = colGoal
+                if num != 0:
+                    rowGoal = (num - 1) // size
+                    colGoal = (num - 1) % size
+                    inRow[num] = rowGoal
+                    inCol[num] = colGoal
+                    #calculate manD
+                    manD += abs(rowGoal - y) + abs(colGoal - x)
         #Check row conflicts
         for r in range(size):
             for cI in range(size):
@@ -127,7 +136,7 @@ class Node(object):
                         #Conflict exists!
                         conflicts += 1
         #print "conflicts:", conflicts
-        return conflicts*2 + self.getManhattanDistance()
+        return conflicts*2 + manD
     
     #Gets the number of tiles that are out of Row and out of Col (H1a)
     def getOutOfLine(self):
@@ -165,6 +174,8 @@ class Node(object):
         direction = [(y-1, x), (y+1, x), (y, x-1), (y, x+1)] #UP, DOWN, LEFT, RIGHT
         for move in range(len(direction)):
             (y1, x1) = direction[move]
+            if currNode.move is not None and move == mMap[currNode.move]:
+                continue
             validFlag = False
             if (move == 0 and y > 0) or (move == 1 and y < (len(self.puzzle) - 1)):
                 #Valid to move UP or DOWN
@@ -267,11 +278,11 @@ class Puzzle(object):
         #self.printP()
         if self.checkSolvable(currNode.puzzle) == False:
             return ["UNSOLVABLE"]
-        # 3 Data Structures to keep track of...
+        # 2 Data Structures to keep track of...
         openList = PriorityQueue()
         visited = set()
-        h = currNode.getH()
-        openList.put((h, currNode.g, ID, currNode)) # STABLEST
+        visited.add(currNode)
+        openList.put((currNode.getH(), currNode)) # STABLEST
         steps = 0 #Nodes popped off frontier
         while True:
             steps += 1
@@ -281,23 +292,25 @@ class Puzzle(object):
             if openList.empty(): #Empty frontier
                 print 'Empty Queue!'
                 break
-            currNode = openList.get()[3] # STABLEST
-            visited.add(currNode)
+            currNode = openList.get()[1] # STABLEST
             if self.isGoalState(currNode.puzzle):
                 ans = self.reconstruct(currNode)
                 self.timeTaken = time() - startTime
                 self.nodesPopped = steps
                 self.nodesInside = openList.qsize()
                 self.finalMoves = len(ans)
+                print 'TIME:', self.timeTaken
+                print 'nodesPopped', self.nodesPopped
                 return ans
             for child in currNode.getChildren(currNode):
                 ID += 1
-                #Child is now a Node
-                child.g = currNode.g + 1
-                child.h = child.getH()
-                child.tick = ID;
+                #Child is now a Node                
                 if child not in visited:
-                    openList.put((child.g + child.h, child.g, ID, child)) # STABLEST
+                    child.g = currNode.g + 1
+                    child.h = child.getH()
+                    child.tick = ID
+                    openList.put((child.g + child.h, child)) # STABLEST
+                    visited.add(child)
         timeTaken = time() - startTime
         print 'Time taken:', str(timeTaken)
         return ["UNSOLVABLE"]

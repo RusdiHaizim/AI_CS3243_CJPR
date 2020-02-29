@@ -68,6 +68,8 @@ class Node(object):
         direction = [(y-1, x), (y+1, x), (y, x-1), (y, x+1)] #UP, DOWN, LEFT, RIGHT
         for move in range(len(direction)):
             (y1, x1) = direction[move]
+            if currNode.move is not None and move == mMap[currNode.move]:
+                continue
             validFlag = False
             if (move == 0 and y > 0) or (move == 1 and y < (len(self.puzzle) - 1)):
                 #Valid to move UP or DOWN
@@ -172,23 +174,16 @@ class Puzzle(object):
         # 3 Data Structures to keep track of...
         openList = Queue()
         visited = set()
+        visited.add(currNode)
         openList.put(currNode) # STABLEST
         steps = 0 #Nodes popped off frontier
         while True:
             steps += 1
-##            if steps % 100000 == 0:
-##                print 'step:', steps, 'size', openList.qsize()
-##                sys.stdout.flush()
             if openList.empty(): #Empty frontier
                 print 'Empty Queue!'
                 break
             currNode = openList.get() # STABLEST
-            visited.add(currNode)
             if self.isGoalState(currNode.puzzle):
-                #print 'Total nodes popped:', steps, 'size', openList.qsize()
-                #timeTaken = time() - startTime
-                #print 'Time taken:', str(timeTaken)
-                #sys.stdout.flush()
                 ans = self.reconstruct(currNode)
                 self.timeTaken = time() - startTime
                 self.nodesPopped = steps
@@ -199,6 +194,7 @@ class Puzzle(object):
                 #Child is now a Node
                 if child not in visited:
                     openList.put(child) # STABLEST
+                    visited.add(child)
         timeTaken = time() - startTime
         print 'Time taken:', str(timeTaken)
         return ["UNSOLVABLE"]

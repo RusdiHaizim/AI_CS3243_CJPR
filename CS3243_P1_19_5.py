@@ -40,7 +40,7 @@ def printParams(puzzle):
 #Run 3x3 test cases
 def run_n_equals_3():
     fileList = []
-    path = "n_equals_3"
+    path = "public_tests_p1/n_equals_3"
     for file in sorted(os.listdir(path)):
         if file.endswith(".txt"):
             fileList.append(os.path.join(path, file))
@@ -74,7 +74,7 @@ def run_n_equals_3():
 #Run 4x4 test cases
 def run_n_equals_4():
     fileList = []
-    path = "n_equals_4"
+    path = "public_tests_p1/n_equals_4"
     for file in sorted(os.listdir(path)):
         if file.endswith(".txt"):
             fileList.append(os.path.join(path, file))
@@ -99,10 +99,10 @@ def run_n_equals_4():
 
 ##        print '-'*30 + '\n' + 'Uninformed Search (BFS):' #BFS TOO LONG...
 ##        puzzle = algoU.Puzzle(init, goal); ans = puzzle.solve(); printParams(puzzle)
-        print '-'*30 + '\n' + 'Informed Search (A-STAR with Euclidean Distance):'
-        puzzle = algoI1.Puzzle(init, goal); ans = puzzle.solve(); printParams(puzzle)
-        print '-'*30 + '\n' + 'Informed Search (A-STAR with Manhattan Distance):'
-        puzzle = algoI2.Puzzle(init, goal); ans = puzzle.solve(); printParams(puzzle)
+##        print '-'*30 + '\n' + 'Informed Search (A-STAR with Euclidean Distance):'
+##        puzzle = algoI1.Puzzle(init, goal); ans = puzzle.solve(); printParams(puzzle)
+##        print '-'*30 + '\n' + 'Informed Search (A-STAR with Manhattan Distance):'
+##        puzzle = algoI2.Puzzle(init, goal); ans = puzzle.solve(); printParams(puzzle)
         print '-'*30 + '\n' + 'Informed Search (A-STAR with Manhattan Distance PLUS Linear Conflicts):'
         puzzle = algoI3.Puzzle(init, goal); ans = puzzle.solve(); printParams(puzzle)
         
@@ -111,7 +111,7 @@ def run_n_equals_4():
 #Run 5x5 test cases
 def run_n_equals_5():
     fileList = []
-    path = "n_equals_5"
+    path = "public_tests_p1/n_equals_5"
     for file in sorted(os.listdir(path)):
         if file.endswith(".txt"):
             fileList.append(os.path.join(path, file))
@@ -145,8 +145,8 @@ def run_n_equals_5():
 
 if __name__ == "__main__":
     # do NOT modify below
-##    run_n_equals_3()
+    run_n_equals_3()
     run_n_equals_4()
-##    run_n_equals_5()
+    run_n_equals_5()
     
     

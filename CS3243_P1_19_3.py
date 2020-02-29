@@ -30,7 +30,9 @@ class Node(object):
         return self.key == other.key
     
     def __lt__(self, other):
-        return self.g < other.g
+        if self.g != other.g:
+            return self.g < other.g
+        return self.tick < other.tick
     
     #Swaps the tiles
     def swap(self, data, p1, p2):
@@ -127,7 +129,7 @@ class Node(object):
                         #Conflict exists!
                         conflicts += 1
         #print "conflicts:", conflicts
-        return conflicts
+        return conflicts*2 + self.getManhattanDistance()
     
     #Gets the number of tiles that are out of Row and out of Col (H1a)
     def getOutOfLine(self):
@@ -165,6 +167,8 @@ class Node(object):
         direction = [(y-1, x), (y+1, x), (y, x-1), (y, x+1)] #UP, DOWN, LEFT, RIGHT
         for move in range(len(direction)):
             (y1, x1) = direction[move]
+            if currNode.move is not None and move == mMap[currNode.move]:
+                continue
             validFlag = False
             if (move == 0 and y > 0) or (move == 1 and y < (len(self.puzzle) - 1)):
                 #Valid to move UP or DOWN
@@ -267,13 +271,11 @@ class Puzzle(object):
         #self.printP()
         if self.checkSolvable(currNode.puzzle) == False:
             return ["UNSOLVABLE"]
-        # 3 Data Structures to keep track of...
+        # 2 Data Structures to keep track of...
         openList = PriorityQueue()
         visited = set()
-        h = currNode.getH()
-        openList.put((h, currNode.g, ID, currNode)) # STABLEST
-        #openList.put((h, currNode.g, currNode)) # sortOfSTABLE
-        #openList.put((h, currNode)) # UNSTABLE
+        visited.add(currNode)
+        openList.put((currNode.getH(), currNode)) # STABLEST
         steps = 0 #Nodes popped off frontier
         while True:
             steps += 1
@@ -283,32 +285,25 @@ class Puzzle(object):
             if openList.empty(): #Empty frontier
                 print 'Empty Queue!'
                 break
-            currNode = openList.get()[3] # STABLEST
-            #currNode = openList.get()[2] # sortOfSTABLE
-            #currNode = openList.get()[1] # UNSTABLE
-            visited.add(currNode)
+            currNode = openList.get()[1] # STABLEST
             if self.isGoalState(currNode.puzzle):
-                #print 'Total nodes popped:', steps, 'size', openList.qsize()
-                #timeTaken = time() - startTime
-                #print 'Time taken:', str(timeTaken)
-                #print self.getTicks(currNode)
-                #sys.stdout.flush()
                 ans = self.reconstruct(currNode)
                 self.timeTaken = time() - startTime
                 self.nodesPopped = steps
                 self.nodesInside = openList.qsize()
                 self.finalMoves = len(ans)
+                print 'TIME:', self.timeTaken
+                print 'nodesPopped', self.nodesPopped
                 return ans
             for child in currNode.getChildren(currNode):
                 ID += 1
-                #Child is now a Node
-                child.g = currNode.g + 1
-                child.h = child.getH()
-                child.tick = ID;
+                #Child is now a Node                
                 if child not in visited:
-                    openList.put((child.g + child.h, child.g, ID, child)) # STABLEST
-##                    openList.put((newCost + h, newCost, child)) # sortOfSTABLE
-##                    openList.put((newCost + h, child)) # UNSTABLE
+                    child.g = currNode.g + 1
+                    child.h = child.getH()
+                    child.tick = ID
+                    openList.put((child.g + child.h, child)) # STABLEST
+                    visited.add(child)
         timeTaken = time() - startTime
         print 'Time taken:', str(timeTaken)
         return ["UNSOLVABLE"]

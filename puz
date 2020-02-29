@@ -1,1 +1,1 @@
-python CS3243_P1_19_4.py n_equals_4/input_4.txt puzOut.txt
+python CS3243_P1_19_4.py public_tests_p1/n_equals_4/input_3.txt puzOut.txt
