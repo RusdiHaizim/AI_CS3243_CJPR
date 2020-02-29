@@ -99,10 +99,10 @@ def run_n_equals_4():
 
 ##        print '-'*30 + '\n' + 'Uninformed Search (BFS):' #BFS TOO LONG...
 ##        puzzle = algoU.Puzzle(init, goal); ans = puzzle.solve(); printParams(puzzle)
-##        print '-'*30 + '\n' + 'Informed Search (A-STAR with Euclidean Distance):'
-##        puzzle = algoI1.Puzzle(init, goal); ans = puzzle.solve(); printParams(puzzle)
-##        print '-'*30 + '\n' + 'Informed Search (A-STAR with Manhattan Distance):'
-##        puzzle = algoI2.Puzzle(init, goal); ans = puzzle.solve(); printParams(puzzle)
+        print '-'*30 + '\n' + 'Informed Search (A-STAR with Euclidean Distance):'
+        puzzle = algoI1.Puzzle(init, goal); ans = puzzle.solve(); printParams(puzzle)
+        print '-'*30 + '\n' + 'Informed Search (A-STAR with Manhattan Distance):'
+        puzzle = algoI2.Puzzle(init, goal); ans = puzzle.solve(); printParams(puzzle)
         print '-'*30 + '\n' + 'Informed Search (A-STAR with Manhattan Distance PLUS Linear Conflicts):'
         puzzle = algoI3.Puzzle(init, goal); ans = puzzle.solve(); printParams(puzzle)
         
