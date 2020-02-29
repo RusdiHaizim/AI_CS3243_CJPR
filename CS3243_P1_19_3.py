@@ -292,8 +292,8 @@ class Puzzle(object):
                 self.nodesPopped = steps
                 self.nodesInside = openList.qsize()
                 self.finalMoves = len(ans)
-                print 'TIME:', self.timeTaken
-                print 'nodesPopped', self.nodesPopped
+##                print 'TIME:', self.timeTaken
+##                print 'nodesPopped', self.nodesPopped
                 return ans
             for child in currNode.getChildren(currNode):
                 ID += 1
