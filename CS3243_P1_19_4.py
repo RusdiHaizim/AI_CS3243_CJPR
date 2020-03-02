@@ -139,13 +139,17 @@ class Node(object):
     def __hash__(self):
         return hash(self.key)
 
+    def __ne__(self, other):
+        return self.key != other.key
+
     def __eq__(self, other):
         return self.key == other.key
+        #return (self.key, self.g) == (other.key, other.g)
 
-##    def __lt__(self, other):
-##        if self.g != other.g:
-##            return self.g < other.g
-##        return self.tick < other.tick
+    def __lt__(self, other):
+        if self.g != other.g:
+            return self.g < other.g
+        return self.tick < other.tick
     
     #Swaps the tiles
     def swap(self, data, p1, p2):
