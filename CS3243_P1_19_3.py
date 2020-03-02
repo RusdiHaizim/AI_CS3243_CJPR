@@ -27,7 +27,10 @@ class Node(object):
         return hash(self.key)
     
     def __eq__(self, other):
-        return self.key == other.key
+        #return self.key == other.key
+        if self.g != other.g:
+            return self.g < other.g
+        return self.tick < other.tick
     
     def __lt__(self, other):
         if self.g != other.g:
@@ -292,8 +295,8 @@ class Puzzle(object):
                 self.nodesPopped = steps
                 self.nodesInside = openList.qsize()
                 self.finalMoves = len(ans)
-##                print 'TIME:', self.timeTaken
-##                print 'nodesPopped', self.nodesPopped
+                print 'TIME:', self.timeTaken
+                print 'nodesPopped', self.nodesPopped
                 return ans
             for child in currNode.getChildren(currNode):
                 ID += 1
@@ -363,6 +366,6 @@ if __name__ == "__main__":
     with open(sys.argv[2], 'w') as f:
         for answer in ans:
             f.write(answer+'\n')
-            print answer
+            #print answer
             sys.stdout.flush()
         print "TOTAL", len(ans)
