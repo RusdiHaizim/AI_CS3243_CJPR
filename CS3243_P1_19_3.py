@@ -20,22 +20,29 @@ class Node(object):
         self.move = move
         self.g = 0
         self.tick = 0
-        self.key = int(self.getNodeKey(self.puzzle))
+        self.key = self.tupify()
         self.parent = parent
+ 
+    def tupify(self):
+        outer = []
+        for i in self.puzzle:
+            outer.append(tuple(i))
+        return tuple(outer)
  
     def __hash__(self):
         return hash(self.key)
 
     def __ne__(self, other):
         return self.key != other.key
-    
+
     def __eq__(self, other):
         return self.key == other.key
-    
+        #return (self.key, self.g) == (other.key, other.g)
+
     def __lt__(self, other):
         if self.g != other.g:
-            return self.g < other.g
-        return self.tick < other.tick
+            return self.g > other.g
+        return self.tick > other.tick
     
     #Swaps the tiles
     def swap(self, data, p1, p2):
@@ -276,9 +283,8 @@ class Puzzle(object):
             return ["UNSOLVABLE"]
         # 2 Data Structures to keep track of...
         openList = PriorityQueue()
-        visited = set()
-        visited.add(currNode)
         openList.put((currNode.getH(), currNode)) # STABLEST
+        costMap = {currNode.key:0}
         steps = 0 #Nodes popped off frontier
         while True:
             steps += 1
@@ -300,13 +306,13 @@ class Puzzle(object):
                 return ans
             for child in currNode.getChildren(currNode):
                 ID += 1
-                #Child is now a Node                
-                if child not in visited:
-                    child.g = currNode.g + 1
-                    child.h = child.getH()
+                child.g = currNode.g + 1
+                #Child is now a Node          
+                if child.key not in costMap or child.g < costMap[child.key]:
+                    costMap[child.key] = child.g
+                    child.h = child.getH() #ONLINE
                     child.tick = ID
                     openList.put((child.g + child.h, child)) # STABLEST
-                    visited.add(child)
         timeTaken = time() - startTime
         print 'Time taken:', str(timeTaken)
         return ["UNSOLVABLE"]
